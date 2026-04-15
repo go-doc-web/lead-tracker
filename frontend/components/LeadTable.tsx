@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Lead } from "@/types/lead";
 import { leadsApi } from "@/api/leads";
 import { Loader2, Mail, Calendar } from "lucide-react";
@@ -11,8 +12,13 @@ interface Props {
 }
 
 export default function LeadTable({ search, status }: Props) {
+  const router = useRouter();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const handleRowClick = (id: string): void => {
+    router.push(`leads/${id}`);
+  };
 
   useEffect(() => {
     const loadData = async () => {
@@ -87,6 +93,7 @@ export default function LeadTable({ search, status }: Props) {
             {leads.map((lead) => (
               <tr
                 key={lead.id}
+                onClick={() => handleRowClick(lead.id)}
                 className="hover:bg-slate-50/50 transition-colors cursor-pointer group"
               >
                 <td className="px-6 py-4">
@@ -117,7 +124,8 @@ export default function LeadTable({ search, status }: Props) {
         {leads.map((lead) => (
           <div
             key={lead.id}
-            className="p-5 active:bg-slate-50 transition-colors"
+            onClick={() => handleRowClick(lead.id)}
+            className="p-5 active:bg-slate-50 transition-colors cursor-pointer"
           >
             <div className="flex justify-between items-start mb-3">
               <div>
