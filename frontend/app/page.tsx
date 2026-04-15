@@ -75,7 +75,6 @@ export default function LeadsPage() {
         onClose={() => setIsModalOpen(false)}
         onSuccess={() => {
           setIsModalOpen(false);
-          // Тут ми пізніше додамо оновлення списку
         }}
       />
     </main>

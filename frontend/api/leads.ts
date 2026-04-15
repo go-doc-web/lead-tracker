@@ -32,7 +32,14 @@ export const leadsApi = {
       body: JSON.stringify(data),
     });
 
-    if (!res.ok) throw new Error("Error creating lead");
+    if (!res.ok) {
+      // ДІАГНОСТИКА: виводимо в консоль, що саме не подобається бекенду
+      const errorData = await res.json().catch(() => ({}));
+      console.error("Backend Error Details:", errorData);
+
+      throw new Error(errorData.message || "Error creating lead");
+    }
+
     return res.json();
   },
 
