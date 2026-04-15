@@ -34,19 +34,19 @@ export class LeadsService {
     return lead;
   }
 
-  async addComment(dto: CreateCommentDto) {
+  async addComment(id: string, dto: CreateCommentDto) {
     const lead = await this.prisma.lead.findUnique({
-      where: { id: dto.leadId },
+      where: { id: id }, // Ищем по id из параметров
     });
 
     if (!lead) {
-      throw new NotFoundException(`Lead with ID ${dto.leadId}  not found`);
+      throw new NotFoundException(`Lead with ID ${id} not found`);
     }
 
     return this.prisma.comment.create({
       data: {
         text: dto.text,
-        leadId: dto.leadId,
+        leadId: id,
       },
     });
   }

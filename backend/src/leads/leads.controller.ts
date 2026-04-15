@@ -28,9 +28,16 @@ export class LeadsController {
     return this.leadsService.createLead(createLeadDto);
   }
   // Create POST /comments
-  @Post('comments')
-  addComment(@Body() createCommentDto: CreateCommentDto) {
-    return this.leadsService.addComment(createCommentDto);
+  // @Post('comments')
+  // addComment(@Body() createCommentDto: CreateCommentDto) {
+  //   return this.leadsService.addComment(createCommentDto);
+  // }
+  @Post(':id/comments') // Це створює шлях /api/leads/:id/comments
+  createComment(
+    @Param('id') id: string,
+    @Body() createCommentDto: CreateCommentDto,
+  ) {
+    return this.leadsService.addComment(id, createCommentDto);
   }
 
   // GET all / leads

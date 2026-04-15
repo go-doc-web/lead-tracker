@@ -32,7 +32,7 @@ export const leadsApi = {
       body: JSON.stringify(data),
     });
 
-    if (!res.ok) throw new Error("Ошибка при создании лида");
+    if (!res.ok) throw new Error("Error creating lead");
     return res.json();
   },
 
@@ -40,9 +40,19 @@ export const leadsApi = {
     const res = await fetch(`${API_URL}/leads/${id}`);
 
     if (!res.ok) {
-      throw new Error("Клієнта не знайдено");
+      throw new Error("Client not found");
     }
 
+    return res.json();
+  },
+
+  addComment: async (leadId: string, text: string): Promise<Comment> => {
+    const res = await fetch(`${API_URL}/leads/${leadId}/comments`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text, leadId }),
+    });
+    if (!res.ok) throw new Error("Error");
     return res.json();
   },
 };

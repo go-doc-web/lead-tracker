@@ -5,6 +5,12 @@ export enum LeadStatus {
   WON = "WON",
   LOST = "LOST",
 }
+
+export interface Comment {
+  id: string;
+  text: string;
+  createdAt: string;
+}
 export interface Lead {
   id: string;
   name: string;
@@ -15,6 +21,7 @@ export interface Lead {
   notes?: string;
   createdAt: string;
   updatedAt: string;
+  comments?: Comment[];
   _count?: {
     comments: number;
   };

@@ -7,6 +7,7 @@ import { leadsApi } from "@/api/leads";
 import { ChevronLeft, Loader2, Mail, Calendar, Building2 } from "lucide-react";
 
 import StatusBadge from "../../../components/StatusBadge";
+import Comments from "@/components/Comments";
 
 export default function LeadDetailPage() {
   const params = useParams();
@@ -23,7 +24,6 @@ export default function LeadDetailPage() {
         setLoading(true);
         const data = await leadsApi.getOne(params.id as string);
         setLead(data);
-        console.log("data", data);
       } catch (err) {
         setError("Клієнта не знайдено або сталася помилка");
       } finally {
@@ -110,12 +110,7 @@ export default function LeadDetailPage() {
             </div>
 
             {/* МІСЦЕ ДЛЯ КОМЕНТАРІВ (наступна задача) */}
-            <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
-              <h3 className="text-lg font-bold mb-4">Коментарі</h3>
-              <p className="text-slate-400 text-sm">
-                Тут скоро з'явиться стрічка подій...
-              </p>
-            </div>
+            <Comments leadId={lead.id} initialComments={lead.comments || []} />
           </div>
 
           {/* ПРАВА КОЛОНКА: Системна інформація */}
