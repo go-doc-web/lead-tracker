@@ -6,7 +6,7 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
-  const PORT = process.env.PORT || 3000;
+  const PORT = process.env.PORT || 3001;
   const app = await NestFactory.create(AppModule);
   app.useGlobalPipes(
     new ValidationPipe({
