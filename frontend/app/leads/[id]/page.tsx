@@ -4,6 +4,7 @@ import { ChevronLeft } from "lucide-react";
 
 export default function LeadDetailPage() {
   const params = useParams(); // Отримуємо ID з URL
+
   const router = useRouter();
   const id = params.id;
 
@@ -13,7 +14,7 @@ export default function LeadDetailPage() {
         {/* Кнопка "Назад" */}
         <button
           onClick={() => router.back()}
-          className="flex items-center gap-2 text-slate-500 hover:text-slate-900 transition-colors mb-6"
+          className="flex items-center gap-2 text-slate-500 hover:text-slate-900 transition-colors mb-6 cursor-pointer"
         >
           <ChevronLeft size={20} />
           <span>Назад до списку</span>

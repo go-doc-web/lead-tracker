@@ -35,4 +35,14 @@ export const leadsApi = {
     if (!res.ok) throw new Error("Ошибка при создании лида");
     return res.json();
   },
+
+  getOne: async (id: string): Promise<Lead> => {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/leads/${id}`);
+
+    if (!res.ok) {
+      throw new Error("Клієнта не знайдено");
+    }
+
+    return res.json();
+  },
 };
