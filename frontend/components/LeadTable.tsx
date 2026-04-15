@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Lead } from "@/types/lead";
 import { leadsApi } from "@/api/leads";
-import { Loader2, Mail, Calendar } from "lucide-react";
+import { Loader2, Calendar } from "lucide-react";
+import StatusBadge from "../components/StatusBadge";
 
 interface Props {
   search: string;
@@ -45,28 +46,6 @@ export default function LeadTable({ search, status }: Props) {
         <Loader2 className="animate-spin text-blue-600" size={32} />
       </div>
     );
-
-  const StatusBadge = ({ s }: { s: string }) => {
-    const labels: any = {
-      NEW: "Новий",
-      WON: "Виграно",
-      LOST: "Програно",
-      IN_PROGRESS: "В роботі",
-    };
-    const styles: any = {
-      NEW: "bg-blue-50 text-blue-600 border-blue-100",
-      WON: "bg-emerald-50 text-emerald-600 border-emerald-100",
-      LOST: "bg-rose-50 text-rose-600 border-rose-100",
-      IN_PROGRESS: "bg-amber-50 text-amber-600 border-amber-100",
-    };
-    return (
-      <span
-        className={`px-2.5 py-1 rounded-lg border text-[10px] font-bold uppercase tracking-wide ${styles[s] || styles.NEW}`}
-      >
-        {labels[s] || s}
-      </span>
-    );
-  };
 
   return (
     <div className="w-full">

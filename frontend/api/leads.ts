@@ -37,7 +37,7 @@ export const leadsApi = {
   },
 
   getOne: async (id: string): Promise<Lead> => {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/leads/${id}`);
+    const res = await fetch(`${API_URL}/leads/${id}`);
 
     if (!res.ok) {
       throw new Error("Клієнта не знайдено");
