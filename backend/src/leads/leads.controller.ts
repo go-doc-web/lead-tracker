@@ -10,10 +10,12 @@ import {
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { LeadsService } from './leads.service';
-import { CreateLeadDto } from './dto/create-lead.dto';
-import { CreateCommentDto } from './dto/create-comment.dto';
-import { GetLeadsDto } from './dto/get-leads.dto';
-import { UpdateLeadDto } from './dto/update-lead.dto';
+import {
+  CreateLeadDto,
+  CreateCommentDto,
+  GetLeadsDto,
+  UpdateLeadDto,
+} from './dto';
 
 @ApiTags('Leads')
 @Controller('leads')
