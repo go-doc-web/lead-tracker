@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateLeadDto } from './dto/create-lead.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { GetLeadsDto } from './dto/get-leads.dto';
+import { UpdateLeadDto } from './dto/update-lead.dto';
 
 @Injectable()
 export class LeadsService {
@@ -12,6 +13,23 @@ export class LeadsService {
     return this.prisma.lead.create({
       data: dto,
     });
+  }
+
+  async findOne(id: string) {
+    const lead = await this.prisma.lead.findUnique({
+      where: { id },
+      include: {
+        comments: {
+          orderBy: { createdAt: 'desc' },
+        },
+      },
+    });
+
+    if (!lead) {
+      throw new NotFoundException(`Лид с ID ${id} не найден`);
+    }
+
+    return lead;
   }
 
   async addComment(dto: CreateCommentDto) {
@@ -80,5 +98,24 @@ export class LeadsService {
         lastPage: Math.ceil(total / limit), // Calculate total number of pages
       },
     };
+  }
+
+  // Update /leads
+
+  async update(id: string, dto: UpdateLeadDto) {
+    await this.findOne(id);
+
+    return this.prisma.lead.update({
+      where: { id },
+      data: dto,
+    });
+  }
+
+  async remove(id: string) {
+    await this.findOne(id);
+
+    return this.prisma.lead.delete({
+      where: { id },
+    });
   }
 }
