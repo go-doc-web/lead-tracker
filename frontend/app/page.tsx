@@ -3,10 +3,12 @@
 import { useState } from "react";
 import LeadTable from "@/components/LeadTable";
 import { Plus, Search, SlidersHorizontal } from "lucide-react";
+import CreateLeadModal from "@/components/CreateLeadModal";
 
 export default function LeadsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
     <main className="min-h-screen bg-[#F8FAFC] text-[#1E293B]">
@@ -21,7 +23,10 @@ export default function LeadsPage() {
               Керування воронкою продажів
             </p>
           </div>
-          <button className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition-all shadow-sm active:transform active:scale-[0.98]">
+          <button
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition-all shadow-sm active:transform active:scale-[0.98] cursor-pointer"
+            onClick={() => setIsModalOpen(true)}
+          >
             <Plus size={18} />
             <span>Новий лід</span>
           </button>
@@ -65,6 +70,14 @@ export default function LeadsPage() {
           <LeadTable search={searchQuery} status={statusFilter} />
         </div>
       </div>
+      <CreateLeadModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSuccess={() => {
+          setIsModalOpen(false);
+          // Тут ми пізніше додамо оновлення списку
+        }}
+      />
     </main>
   );
 }
