@@ -1,4 +1,11 @@
-import { IsOptional, IsString, IsEnum, IsInt, Min } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  IsEnum,
+  IsInt,
+  Min,
+  IsIn,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Status } from '@prisma/client';
@@ -44,4 +51,24 @@ export class GetLeadsDto {
   @IsInt()
   @Min(1)
   limit?: number = 10;
+
+  @ApiPropertyOptional({
+    description: 'Field to sort by',
+    enum: ['createdAt', 'updatedAt', 'value', 'name'],
+    default: 'createdAt',
+  })
+  @IsOptional()
+  @IsString()
+  @IsIn(['createdAt', 'updatedAt', 'value', 'name'])
+  sort?: string = 'createdAt';
+
+  @ApiPropertyOptional({
+    description: 'Order of sorting',
+    enum: ['asc', 'desc'],
+    default: 'desc',
+  })
+  @IsOptional()
+  @IsString()
+  @IsIn(['asc', 'desc'])
+  order?: string = 'desc';
 }

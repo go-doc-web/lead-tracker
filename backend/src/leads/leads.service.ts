@@ -51,53 +51,40 @@ export class LeadsService {
     });
   }
   async findAll(query: GetLeadsDto) {
-    const { search, status, page = 1, limit = 10 } = query;
-
-    // Calculate how many records to skip (offset)
+    const { page, limit, search, status, sort, order } = query;
     const skip = (page - 1) * limit;
 
-    // Initialize filter conditions object
-    const where: any = {};
-
-    // Apply status filter if provided
-    if (status) {
-      where.status = status;
-    }
-
-    // Apply full-text search across multiple fields
-    if (search) {
-      where.OR = [
-        { name: { contains: search, mode: 'insensitive' } },
-        { email: { contains: search, mode: 'insensitive' } },
-        { company: { contains: search, mode: 'insensitive' } },
-      ];
-    }
-
-    // Execute two database queries in parallel for better performance
-    // 1. Fetch the paginated data
-    // 2. Count the total records matching the filters
-    const [data, total] = await Promise.all([
-      this.prisma.lead.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: { createdAt: 'desc' }, // Latest leads first
-        include: {
-          _count: {
-            select: { comments: true }, // Include comment count for each lead
-          },
-        },
+    // Формуємо фільтри
+    const where: any = {
+      ...(status && { status }),
+      ...(search && {
+        OR: [
+          { name: { contains: search, mode: 'insensitive' } },
+          { email: { contains: search, mode: 'insensitive' } },
+          { company: { contains: search, mode: 'insensitive' } },
+        ],
       }),
-      this.prisma.lead.count({ where }),
-    ]);
+    };
 
-    // Return formatted response with data and pagination metadata
+    // ОСЬ ЦЕ ЗМУСИТЬ БАЗУ СОРТУВАТИ:
+    const leads = await this.prisma.lead.findMany({
+      where,
+      take: limit,
+      skip,
+      orderBy: {
+        [sort]: order, // Динамічне поле: createdAt, value тощо
+      },
+      include: { _count: { select: { comments: true } } },
+    });
+
+    const total = await this.prisma.lead.count({ where });
+
     return {
-      data,
+      data: leads,
       meta: {
         total,
         page,
-        lastPage: Math.ceil(total / limit), // Calculate total number of pages
+        lastPage: Math.ceil(total / limit),
       },
     };
   }

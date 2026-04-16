@@ -7,10 +7,14 @@ export const leadsApi = {
     page = 1,
     search = "",
     status = "",
+    sort = "createdAt",
+    order = "desc",
   ): Promise<ApiResponse<Lead>> => {
     const params = new URLSearchParams({
       page: page.toString(),
       limit: "10",
+      sort,
+      order,
       ...(search && { search }),
       ...(status && { status }),
     });
@@ -23,7 +27,6 @@ export const leadsApi = {
 
     return res.json();
   },
-
   // Create new Lead
   create: async (data: Partial<Lead>): Promise<Lead> => {
     const res = await fetch(`${API_URL}/leads`, {

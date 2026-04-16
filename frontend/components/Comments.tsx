@@ -1,9 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { MessageSquare, Send, Loader2 } from "lucide-react";
-import { Comment } from "@/types/lead";
 import { leadsApi } from "@/api/leads";
+import { MessageSquare, Send, User } from "lucide-react";
+
+interface Comment {
+  id: string;
+  text: string;
+  createdAt: string;
+}
 
 interface Props {
   leadId: string;
@@ -12,84 +17,84 @@ interface Props {
 
 export default function Comments({ leadId, initialComments }: Props) {
   const [comments, setComments] = useState<Comment[]>(initialComments);
-  const [text, setText] = useState("");
-  const [issubmitting, setIsSubmitting] = useState(false);
+  const [newComment, setNewComment] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!text.trim() || issubmitting) return;
+    if (!newComment.trim() || isSubmitting) return;
 
     try {
       setIsSubmitting(true);
+      // Предполагаем, что в leadsApi есть метод addComment
+      const addedComment = await leadsApi.addComment(leadId, newComment);
 
-      const newComment = await leadsApi.addComment(leadId, text);
-
-      setComments([newComment, ...comments]);
-      setText(""); // Очищаємо поле
+      // Добавляем новый комментарий в начало списка
+      setComments([addedComment, ...comments]);
+      setNewComment("");
     } catch (err) {
-      alert("Не вдалося надіслати коментар");
+      alert("Не вдалося додати коментар");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-8">
-      <h3 className="text-xl font-bold flex items-center gap-2">
-        <MessageSquare size={20} className="text-blue-500" />
-        Коментарі
+    <div className="bg-white rounded-[40px] p-8 sm:p-10 border border-slate-200 shadow-sm mt-8">
+      <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-900 mb-8 flex items-center gap-3">
+        <MessageSquare size={18} className="text-blue-500" />
+        Коментарі ({comments.length})
       </h3>
 
-      {/* ФОРМА ДОДАВАННЯ */}
-      <form onSubmit={handleSubmit} className="relative">
+      {/* Форма додавання */}
+      <form onSubmit={handleSubmit} className="mb-10 relative">
         <textarea
-          rows={3}
-          value={text}
-          onChange={(e) => setText(e.target.value)}
+          className="w-full bg-slate-50 rounded-[24px] p-6 pr-16 text-sm text-slate-700 outline-none border border-transparent focus:border-blue-100 transition-all min-h-[100px] resize-none font-medium"
           placeholder="Напишіть щось важливе про цього клієнта..."
-          className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all resize-none"
+          value={newComment}
+          onChange={(e) => setNewComment(e.target.value)}
         />
         <button
           type="submit"
-          disabled={issubmitting || !text.trim()}
-          className="absolute right-3 bottom-3 p-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:bg-slate-300 transition-colors shadow-lg shadow-blue-200"
+          disabled={!newComment.trim() || isSubmitting}
+          className="absolute right-4 bottom-4 p-3 bg-blue-600 text-white rounded-2xl hover:bg-blue-700 disabled:opacity-30 transition-all shadow-lg shadow-blue-100"
         >
-          {issubmitting ? (
-            <Loader2 size={18} className="animate-spin" />
-          ) : (
-            <Send size={18} />
-          )}
+          <Send size={18} />
         </button>
       </form>
 
-      {/* СПИСОК (Timeline) */}
-      <div className="space-y-6 relative before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-[2px] before:bg-slate-100">
-        {comments.length > 0 ? (
+      {/* Список коментарів */}
+      <div className="space-y-6">
+        {comments.length === 0 ? (
+          <p className="text-center text-slate-400 text-sm py-4">
+            Ще немає жодного коментаря
+          </p>
+        ) : (
           comments.map((comment) => (
-            <div
-              key={comment.id}
-              className="relative pl-8 animate-in fade-in slide-in-from-top-2 duration-300"
-            >
-              <div className="absolute left-0 top-1.5 w-[24px] h-[24px] bg-white border-4 border-blue-500 rounded-full z-10 shadow-sm" />
-              <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 group hover:border-slate-200 transition-colors">
-                <p className="text-slate-900 text-sm leading-relaxed whitespace-pre-wrap">
+            <div key={comment.id} className="flex gap-4 group">
+              <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center shrink-0">
+                <User size={18} className="text-slate-400" />
+              </div>
+              <div className="flex-1 bg-slate-50/50 rounded-[24px] p-5 border border-slate-100">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
+                    Менеджер
+                  </span>
+                  <span className="text-[10px] font-bold text-slate-300">
+                    {new Date(comment.createdAt).toLocaleString("uk-UA", {
+                      day: "numeric",
+                      month: "short",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </span>
+                </div>
+                <p className="text-sm text-slate-700 leading-relaxed font-medium">
                   {comment.text}
                 </p>
-                <div className="mt-2 text-[10px] font-bold text-slate-400 uppercase tracking-tight">
-                  {new Date(comment.createdAt).toLocaleString("uk-UA", {
-                    day: "numeric",
-                    month: "short",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </div>
               </div>
             </div>
           ))
-        ) : (
-          <p className="text-slate-400 text-sm pl-8 italic">
-            Коментарів поки немає...
-          </p>
         )}
       </div>
     </div>

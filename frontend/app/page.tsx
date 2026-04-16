@@ -1,17 +1,16 @@
 "use client";
-import dynamic from "next/dynamic";
-import { useState } from "react";
 
-import { Plus, Search, SlidersHorizontal } from "lucide-react";
+import dynamic from "next/dynamic";
+import { useState, useEffect } from "react";
+import { Plus, Search, SlidersHorizontal, ArrowUpDown } from "lucide-react";
 import CreateLeadModal from "@/components/CreateLeadModal";
 import StatsCards from "@/components/StatsCards";
+import { useLeadStore } from "@/store/useLeadStore";
 
 const LeadTable = dynamic(() => import("@/components/LeadTable"), {
   ssr: false,
   loading: () => (
-    <div className="p-20 text-center text-slate-400">
-      Завантаження таблиці...
-    </div>
+    <div className="p-20 text-center text-slate-400">Завантаження...</div>
   ),
 });
 
@@ -20,30 +19,36 @@ export default function LeadsPage() {
   const [statusFilter, setStatusFilter] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  const { fetchLeads, sort, order } = useLeadStore();
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchLeads(1, searchQuery, statusFilter, sort, order);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchQuery, statusFilter, sort, order, fetchLeads]);
+
+  const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const [newSort, newOrder] = e.target.value.split(":");
+    fetchLeads(1, searchQuery, statusFilter, newSort, newOrder);
+  };
+
   return (
-    <main className="min-h-screen bg-[#F8FAFC] text-[#1E293B]">
-      <div className="max-w-5xl mx-auto px-4 py-8 sm:py-12">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-10">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
-              Lead Tracker
-            </h1>
-            <p className="text-slate-500 mt-1 text-sm sm:text-base">
-              Керування воронкою продажів
-            </p>
-          </div>
+    <main className="min-h-screen bg-[#F8FAFC] p-4 sm:p-8">
+      <div className="max-w-5xl mx-auto">
+        <div className="flex justify-between items-center mb-10">
+          <h1 className="text-3xl font-black text-slate-900 tracking-tight">
+            Lead Tracker
+          </h1>
           <button
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition-all shadow-sm active:transform active:scale-[0.98] cursor-pointer"
             onClick={() => setIsModalOpen(true)}
+            className="bg-blue-600 text-white px-6 py-3 rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all"
           >
-            <Plus size={18} />
-            <span>Новий лід</span>
+            <Plus size={18} className="inline mr-2" /> Новий лід
           </button>
         </div>
 
-        {/* Filters */}
-        <div className="flex flex-col md:flex-row gap-3 mb-8">
+        <div className="flex flex-col lg:flex-row gap-4 mb-8">
           <div className="relative flex-1">
             <Search
               className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
@@ -51,40 +56,58 @@ export default function LeadsPage() {
             />
             <input
               type="text"
-              placeholder="Пошук клієнтів за ім'ям, email або компанією..."
+              placeholder="Пошук..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"
+              className="w-full pl-12 pr-4 py-3.5 bg-white border border-slate-200 rounded-2xl outline-none focus:border-blue-500 transition-all text-sm"
             />
           </div>
+
           <div className="flex gap-3">
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="flex-1 md:w-44 bg-white border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              className="bg-white border border-slate-200 rounded-2xl px-5 py-3.5 text-[11px] font-black uppercase tracking-widest outline-none cursor-pointer"
             >
               <option value="">Всі статуси</option>
               <option value="NEW">Новий</option>
+              <option value="CONTACTED">Контакт</option>
               <option value="IN_PROGRESS">В роботі</option>
               <option value="WON">Виграно</option>
               <option value="LOST">Програно</option>
             </select>
-            <button className="p-3 bg-white border border-slate-200 rounded-2xl text-slate-600 hover:bg-slate-50 md:hidden">
-              <SlidersHorizontal size={20} />
-            </button>
+
+            <div className="relative">
+              <select
+                onChange={handleSortChange}
+                value={`${sort}:${order}`}
+                className="bg-white border border-slate-200 rounded-2xl px-5 py-3.5 pr-10 text-[11px] font-black uppercase tracking-widest outline-none cursor-pointer appearance-none"
+              >
+                <option value="createdAt:desc">Нові</option>
+                <option value="createdAt:asc">Старі</option>
+                <option value="value:desc">Бюджет Max</option>
+                <option value="value:asc">Бюджет Min</option>
+              </select>
+              <ArrowUpDown
+                size={14}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+              />
+            </div>
           </div>
         </div>
+
         <StatsCards />
-        {/* Список лідів */}
-        <div className="bg-white rounded-3xl border border-slate-200 shadow-[0_1px_3px_rgba(0,0,0,0.05)] overflow-hidden">
+
+        <div className="mt-8">
           <LeadTable search={searchQuery} status={statusFilter} />
         </div>
       </div>
+
       <CreateLeadModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onSuccess={() => {
-          setIsModalOpen(false);
+        onSuccess={function (): void {
+          throw new Error("Function not implemented.");
         }}
       />
     </main>

@@ -9,11 +9,17 @@ interface LeadState {
   totalCount: number;
   totalPages: number;
   currentPage: number;
+  search: string;
+  status: string;
+  sort: string;
+  order: string;
 
   fetchLeads: (
     page?: number,
     search?: string,
     status?: string,
+    sort?: string,
+    order?: string,
   ) => Promise<void>;
 
   addLead: (lead: Lead) => void;
@@ -27,30 +33,52 @@ export const useLeadStore = create<LeadState>((set, get) => ({
   totalCount: 0,
   totalPages: 1,
   currentPage: 1,
+  search: "",
+  status: "",
+  sort: "createdAt",
+  order: "desc",
 
-  fetchLeads: async (page = 1, search, status) => {
+  fetchLeads: async (page = 1, search, status, sort, order) => {
     set({ loading: true });
+    const state = get();
+
+    const finalSort = sort || state.sort;
+    const finalOrder = order || state.order;
+    const finalSearch = search !== undefined ? search : state.search;
+    const finalStatus = status !== undefined ? status : state.status;
+
     try {
-      const response = await leadsApi.getAll(page, search, status);
+      const response = await leadsApi.getAll(
+        page,
+        finalSearch,
+        finalStatus,
+        finalSort,
+        finalOrder,
+      );
 
       set({
         leads: response.data,
-        loading: false,
         totalCount: response.meta.total,
         totalPages: response.meta.lastPage,
-        currentPage: response.meta.page,
+        currentPage: page,
+        search: finalSearch,
+        status: finalStatus,
+        sort: finalSort,
+        order: finalOrder,
+        loading: false,
       });
     } catch (error) {
-      console.error("Помилка завантаження лідів:", error);
       set({ loading: false });
     }
   },
+
   updateLead: (id, updatedFields) =>
     set((state) => ({
       leads: state.leads.map((l) =>
         l.id === id ? { ...l, ...updatedFields } : l,
       ),
     })),
+
   removeLead: async (id) => {
     const state = get();
     const { currentPage, totalCount, fetchLeads, search, status, leads } =
@@ -70,7 +98,6 @@ export const useLeadStore = create<LeadState>((set, get) => ({
 
     if (updatedLeads.length === 0 && currentPage > 1) {
       const prevPage = currentPage - 1;
-
       await fetchLeads(prevPage, search, status);
     }
   },
