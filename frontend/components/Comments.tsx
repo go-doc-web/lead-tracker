@@ -4,7 +4,7 @@ import { useState } from "react";
 import { leadsApi } from "@/api/leads";
 import { MessageSquare, Send, User } from "lucide-react";
 
-interface Comment {
+interface LeadComment {
   id: string;
   text: string;
   createdAt: string;
@@ -12,11 +12,12 @@ interface Comment {
 
 interface Props {
   leadId: string;
-  initialComments: Comment[];
+  initialComments: LeadComment[];
 }
 
 export default function Comments({ leadId, initialComments }: Props) {
-  const [comments, setComments] = useState<Comment[]>(initialComments);
+  // Вказуємо тип масиву явно
+  const [comments, setComments] = useState<LeadComment[]>(initialComments);
   const [newComment, setNewComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -26,11 +27,11 @@ export default function Comments({ leadId, initialComments }: Props) {
 
     try {
       setIsSubmitting(true);
-      // Предполагаем, что в leadsApi есть метод addComment
       const addedComment = await leadsApi.addComment(leadId, newComment);
 
-      // Добавляем новый комментарий в начало списка
-      setComments([addedComment, ...comments]);
+      const formattedComment = addedComment as unknown as LeadComment;
+
+      setComments([formattedComment, ...comments]);
       setNewComment("");
     } catch (err) {
       alert("Не вдалося додати коментар");
@@ -46,7 +47,6 @@ export default function Comments({ leadId, initialComments }: Props) {
         Коментарі ({comments.length})
       </h3>
 
-      {/* Форма додавання */}
       <form onSubmit={handleSubmit} className="mb-10 relative">
         <textarea
           className="w-full bg-slate-50 rounded-[24px] p-6 pr-16 text-sm text-slate-700 outline-none border border-transparent focus:border-blue-100 transition-all min-h-[100px] resize-none font-medium"
@@ -63,7 +63,6 @@ export default function Comments({ leadId, initialComments }: Props) {
         </button>
       </form>
 
-      {/* Список коментарів */}
       <div className="space-y-6">
         {comments.length === 0 ? (
           <p className="text-center text-slate-400 text-sm py-4">

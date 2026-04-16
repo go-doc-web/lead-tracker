@@ -17,19 +17,28 @@ export default function CreateLeadModal({ isOpen, onClose, onSuccess }: Props) {
   const { addLead } = useLeadStore();
 
   const handleFormSubmit = async (data: LeadFormData) => {
+    // Очищаємо дані від порожніх рядків
     const cleanData = Object.fromEntries(
       Object.entries(data).filter(
         ([, value]) => value !== "" && value !== undefined,
       ),
     );
+
     try {
       setIsSubmitting(true);
       const newLead = await leadsApi.create(cleanData);
-      addLead(newLead);
-      onSuccess();
+
+      if (newLead) {
+        addLead(newLead);
+      }
+
+      if (typeof onSuccess === "function") {
+        onSuccess();
+      } else {
+        window.location.reload();
+      }
     } catch (err) {
-      console.error(err);
-      alert(err instanceof Error ? err.message : "Помилка при створенні");
+      console.error("Помилка при створенні ліда:", err);
     } finally {
       setIsSubmitting(false);
     }

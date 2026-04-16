@@ -106,8 +106,9 @@ export default function LeadsPage() {
       <CreateLeadModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onSuccess={function (): void {
-          throw new Error("Function not implemented.");
+        onSuccess={() => {
+          setIsModalOpen(false);
+          window.location.href = "/";
         }}
       />
     </main>

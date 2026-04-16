@@ -4,6 +4,7 @@ import { useLeadStore } from "@/store/useLeadStore";
 import { useRouter } from "next/navigation";
 import StatusBadge from "./StatusBadge";
 import { useEffect } from "react";
+import { Trash2 } from "lucide-react"; // Імпортуємо іконку
 
 export default function LeadTable({
   search,
@@ -13,11 +14,28 @@ export default function LeadTable({
   status: string;
 }) {
   const router = useRouter();
-  const { leads, loading, totalPages, currentPage, fetchLeads, sort, order } =
-    useLeadStore();
+  // Додаємо removeLead зі стору
+  const {
+    leads,
+    loading,
+    totalPages,
+    currentPage,
+    fetchLeads,
+    sort,
+    order,
+    removeLead,
+  } = useLeadStore();
+
   useEffect(() => {
     fetchLeads(currentPage, search, status, sort, order);
   }, [search, status, sort, order, currentPage, fetchLeads]);
+
+  const handleDelete = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation(); // Щоб не перейшло на сторінку ліда при натисканні на видалення
+    if (confirm("Ви впевнені, що хочете видалити цього клієнта?")) {
+      await removeLead(id);
+    }
+  };
 
   if (loading && leads.length === 0)
     return <div className="p-20 text-center">Завантаження...</div>;
@@ -36,6 +54,8 @@ export default function LeadTable({
             <th className="px-8 py-5 text-right text-[10px] font-black uppercase tracking-widest text-slate-400">
               Бюджет
             </th>
+            {/* Додаємо порожній заголовок для колонки дій */}
+            <th className="px-6 py-5 w-10"></th>
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100">
@@ -59,11 +79,21 @@ export default function LeadTable({
               <td className="px-8 py-5 text-right font-black text-slate-900">
                 {lead.value ? `${lead.value.toLocaleString()} $` : "—"}
               </td>
+              {/* Кнопка видалення */}
+              <td className="px-6 py-5">
+                <button
+                  onClick={(e) => handleDelete(e, lead.id)}
+                  className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all opacity-0 group-hover:opacity-100"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </td>
             </tr>
           ))}
         </tbody>
       </table>
 
+      {/* Пагінація */}
       {totalPages > 1 && (
         <div className="p-6 border-t border-slate-100 flex justify-between items-center">
           <span className="text-[10px] font-black uppercase text-slate-400">
