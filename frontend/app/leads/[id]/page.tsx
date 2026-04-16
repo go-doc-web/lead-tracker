@@ -1,10 +1,20 @@
 "use client";
+
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-
 import { Lead } from "@/types/lead";
 import { leadsApi } from "@/api/leads";
-import { ChevronLeft, Loader2, Mail, Calendar, Building2 } from "lucide-react";
+import {
+  ChevronLeft,
+  Loader2,
+  Mail,
+  Calendar,
+  Building2,
+  Edit2,
+  Check,
+  X,
+  DollarSign,
+} from "lucide-react";
 import { useLeadStore } from "@/store/useLeadStore";
 import StatusBadge from "../../../components/StatusBadge";
 import Comments from "@/components/Comments";
@@ -12,23 +22,13 @@ import Comments from "@/components/Comments";
 export default function LeadDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const id = params.id;
   const { updateLead } = useLeadStore();
+
   const [lead, setLead] = useState<Lead | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const handleStatusChange = async (newStatus: string) => {
-    try {
-      await leadsApi.update(lead.id, { status: newStatus as any });
-
-      updateLead(lead.id, { status: newStatus as any });
-
-      setLead((prev) => (prev ? { ...prev, status: newStatus as any } : null));
-    } catch (err) {
-      alert("Помилка при зміні статусу");
-    }
-  };
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState<Partial<Lead>>({});
 
   useEffect(() => {
     const fetchLead = async () => {
@@ -36,15 +36,59 @@ export default function LeadDetailPage() {
         setLoading(true);
         const data = await leadsApi.getOne(params.id as string);
         setLead(data);
+        setFormData(data);
       } catch (err) {
-        setError("Клієнта не знайдено або сталася помилка");
+        setError("Клієнта не знайдено");
       } finally {
         setLoading(false);
       }
     };
-
     if (params.id) fetchLead();
   }, [params.id]);
+
+  const handleSave = async () => {
+    try {
+      // 1. Створюємо чистий об'єкт для відправки (БЕЗ id, дат та коментарів)
+      const {
+        id,
+        createdAt,
+        updatedAt,
+        comments,
+        _count, // якщо є
+        ...dataToSave
+      } = formData as any;
+
+      // 2. Відправляємо ТІЛЬКИ дозволені поля
+      const updatedResponse = await leadsApi.update(lead!.id, dataToSave);
+
+      // 3. Оновлюємо стейт, поєднуючи старі дані з новими
+      const finalLead = {
+        ...lead,
+        ...updatedResponse,
+      } as Lead;
+
+      setLead(finalLead);
+      updateLead(lead!.id, finalLead);
+      setIsEditing(false);
+    } catch (err) {
+      console.error("Помилка при збереженні:", err);
+      alert("Помилка: сервер відхилив запит (Bad Request). Перевірте поля.");
+    }
+  };
+
+  const formatDate = (date: any) => {
+    if (!date) return "—";
+    const d = new Date(date);
+    return isNaN(d.getTime())
+      ? "Щойно"
+      : d.toLocaleString("uk-UA", {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+  };
 
   if (loading)
     return (
@@ -53,127 +97,174 @@ export default function LeadDetailPage() {
       </div>
     );
   if (error || !lead)
-    return <div className="p-20 text-center text-red-500">{error}</div>;
+    return (
+      <div className="p-20 text-center text-red-500 font-bold">{error}</div>
+    );
+
   return (
-    <main className="min-h-screen bg-[#F8FAFC] p-4 sm:p-8 text-slate-900">
+    <main className="min-h-screen bg-[#F8FAFC] p-4 sm:p-8 text-slate-900 font-sans">
       <div className="max-w-5xl mx-auto">
-        {/* Кнопка "Назад" */}
-        <button
-          onClick={() => router.back()}
-          className="flex items-center gap-2 text-slate-500 hover:text-slate-900 mb-8 group transition-colors cursor-pointer"
-        >
-          <ChevronLeft
-            size={20}
-            className="group-hover:-translate-x-1 transition-transform"
-          />
-          <span className="font-medium">Назад до списку</span>
-        </button>
+        <div className="flex justify-between items-center mb-8">
+          <button
+            onClick={() => router.back()}
+            className="flex items-center gap-2 text-slate-400 hover:text-slate-900 transition-colors font-bold uppercase text-[10px] tracking-widest"
+          >
+            <ChevronLeft size={16} /> Назад до списку
+          </button>
+
+          {!isEditing ? (
+            <button
+              onClick={() => setIsEditing(true)}
+              className="flex items-center gap-2 px-6 py-2.5 bg-white border border-slate-200 rounded-2xl text-slate-600 font-black text-[10px] uppercase tracking-widest hover:shadow-md transition-all"
+            >
+              <Edit2 size={14} /> Редагувати
+            </button>
+          ) : (
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  setIsEditing(false);
+                  setFormData(lead);
+                }}
+                className="px-5 py-2.5 text-slate-400 font-black text-[10px] uppercase tracking-widest"
+              >
+                Скасувати
+              </button>
+              <button
+                onClick={handleSave}
+                className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all"
+              >
+                <Check size={14} /> Зберегти
+              </button>
+            </div>
+          )}
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* ЛІВА КОЛОНКА: Основна інформація */}
           <div className="lg:col-span-2 space-y-8">
-            <div className="bg-white rounded-3xl p-6 sm:p-10 border border-slate-200 shadow-sm">
-              {/* Шапка картки */}
-              <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-8">
-                <div>
-                  <h1 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
-                    {lead.name}
-                  </h1>
-                  <div className="flex items-center gap-2 text-slate-500 mt-2">
-                    <Mail size={18} className="text-slate-400" />
-                    <span className="text-base">
-                      {lead.email || "Електронна пошта відсутня"}
-                    </span>
+            <div className="bg-white rounded-[40px] p-8 sm:p-12 border border-slate-200 shadow-sm relative overflow-hidden">
+              <div className="flex flex-col sm:flex-row justify-between items-start gap-6 mb-10">
+                <div className="flex-1 w-full">
+                  {isEditing ? (
+                    <input
+                      className="text-2xl sm:text-4xl font-black text-slate-900 outline-none border-b-2 border-blue-500 w-full bg-transparent pb-1"
+                      value={formData.name || ""}
+                      onChange={(e) =>
+                        setFormData({ ...formData, name: e.target.value })
+                      }
+                    />
+                  ) : (
+                    <h1 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
+                      {lead.name}
+                    </h1>
+                  )}
+
+                  <div className="flex items-center gap-2 text-slate-500 mt-4">
+                    <Mail size={16} className="text-slate-300" />
+                    {isEditing ? (
+                      <input
+                        className="text-sm font-medium outline-none border-b border-slate-100 w-full"
+                        value={formData.email || ""}
+                        onChange={(e) =>
+                          setFormData({ ...formData, email: e.target.value })
+                        }
+                      />
+                    ) : (
+                      <span className="text-sm font-medium">
+                        {lead.email || "Електронна пошта відсутня"}
+                      </span>
+                    )}
                   </div>
                 </div>
-                <select
-                  value={lead.status}
-                  onChange={(e) => handleStatusChange(e.target.value)}
-                  className={`px-4 py-1.5 rounded-xl border text-[11px] font-black uppercase tracking-widest cursor-pointer outline-none transition-all
-                            ${lead.status === "NEW" ? "bg-blue-50 text-blue-600 border-blue-100" : ""}
-                            ${lead.status === "CONTACTED" ? "bg-indigo-50 text-indigo-600 border-indigo-100" : ""}
-                            ${lead.status === "IN_PROGRESS" ? "bg-amber-50 text-amber-600 border-amber-100" : ""}
-                            ${lead.status === "WON" ? "bg-emerald-50 text-emerald-600 border-emerald-100" : ""}
-                            ${lead.status === "LOST" ? "bg-rose-50 text-rose-600 border-rose-100" : ""}
-                            `}
-                >
-                  <option value="NEW">Новий</option>
-                  <option value="CONTACTED">Контакт встановлено</option>
-                  <option value="IN_PROGRESS">В роботі</option>
-                  <option value="WON">Виграно</option>
-                  <option value="LOST">Програно</option>
-                </select>
+
+                <StatusBadge s={lead.status} />
               </div>
 
-              {/* Сітка з деталями */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 py-8 border-y border-slate-100">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-10 py-10 border-y border-slate-50">
                 <div>
-                  <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2">
-                    Компанія
-                  </p>
-                  <div className="flex items-center gap-2 text-slate-900 font-semibold text-lg">
-                    <Building2 size={20} className="text-slate-400" />
-                    {lead.company || "—"}
-                  </div>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                    <Building2 size={14} /> Компанія
+                  </label>
+                  {isEditing ? (
+                    <input
+                      className="w-full font-bold text-slate-900 outline-none border-b border-slate-100"
+                      value={formData.company || ""}
+                      onChange={(e) =>
+                        setFormData({ ...formData, company: e.target.value })
+                      }
+                    />
+                  ) : (
+                    <p className="font-bold text-slate-900 text-lg">
+                      {lead.company || "—"}
+                    </p>
+                  )}
                 </div>
                 <div>
-                  <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2">
-                    Бюджет угоди
-                  </p>
-                  <p className="text-2xl font-black text-blue-600">
-                    {lead.value ? `${lead.value.toLocaleString()} $` : "—"}
-                  </p>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                    <DollarSign size={14} /> Бюджет угоди
+                  </label>
+                  {isEditing ? (
+                    <input
+                      type="number"
+                      className="w-full text-xl font-black text-blue-600 outline-none border-b border-slate-100"
+                      value={formData.value || 0}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          value: Number(e.target.value),
+                        })
+                      }
+                    />
+                  ) : (
+                    <p className="text-2xl font-black text-blue-600 tracking-tight">
+                      {lead.value ? `${lead.value.toLocaleString()} $` : "—"}
+                    </p>
+                  )}
                 </div>
               </div>
 
-              {/* Нотатки */}
-              <div className="mt-8">
-                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-3">
+              <div className="mt-10">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 block">
                   Додаткові нотатки
-                </p>
-                <div className="bg-slate-50 rounded-2xl p-5 text-slate-700 text-sm leading-relaxed border border-slate-100 italic">
-                  {lead.notes || "Опис відсутній..."}
-                </div>
+                </label>
+                {isEditing ? (
+                  <textarea
+                    className="w-full bg-slate-50 rounded-[24px] p-6 text-slate-700 text-sm border border-slate-100 outline-none focus:border-blue-200 transition-all min-h-[120px]"
+                    value={formData.notes || ""}
+                    onChange={(e) =>
+                      setFormData({ ...formData, notes: e.target.value })
+                    }
+                  />
+                ) : (
+                  <div className="bg-slate-50/50 rounded-[24px] p-6 text-slate-600 text-sm leading-relaxed border border-slate-100 font-medium whitespace-pre-wrap">
+                    {lead.notes || "Опис відсутній..."}
+                  </div>
+                )}
               </div>
             </div>
-
-            {/* МІСЦЕ ДЛЯ КОМЕНТАРІВ (наступна задача) */}
             <Comments leadId={lead.id} initialComments={lead.comments || []} />
           </div>
 
-          {/* ПРАВА КОЛОНКА: Системна інформація */}
-          <div className="space-y-6">
-            <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
-              <h3 className="font-bold text-slate-900 mb-6 flex items-center gap-2">
-                <Calendar size={18} className="text-blue-500" />
-                Історія запису
-              </h3>
-              <div className="space-y-6">
-                <div className="flex flex-col">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                    Дата створення
-                  </span>
-                  <span className="text-slate-900 font-medium mt-1">
-                    {new Date(lead.createdAt).toLocaleString("uk-UA", {
-                      day: "numeric",
-                      month: "long",
-                      year: "numeric",
-                    })}
-                  </span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                    Останні зміни
-                  </span>
-                  <span className="text-slate-900 font-medium mt-1">
-                    {new Date(lead.updatedAt).toLocaleString("uk-UA", {
-                      day: "numeric",
-                      month: "long",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </span>
-                </div>
+          <div className="bg-white rounded-[32px] p-8 border border-slate-200 shadow-sm h-fit">
+            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-900 mb-8 flex items-center gap-2">
+              <Calendar size={16} className="text-blue-500" /> Історія запису
+            </h3>
+            <div className="space-y-8 pl-4 border-l border-slate-100">
+              <div className="flex flex-col">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">
+                  Дата створення
+                </span>
+                <span className="text-slate-900 font-bold mt-1 text-sm">
+                  {formatDate(lead.createdAt)}
+                </span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">
+                  Останні зміни
+                </span>
+                <span className="text-slate-900 font-bold mt-1 text-sm">
+                  {formatDate(lead.updatedAt)}
+                </span>
               </div>
             </div>
           </div>
