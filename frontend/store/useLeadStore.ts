@@ -15,6 +15,7 @@ interface LeadState {
   // Функція для швидкого додавання ліда в список без перезапиту до БД
   addLead: (lead: Lead) => void;
   removeLead: (id: string) => void;
+  updateLead: (id: string, updatedFields: Partial<Lead>) => void;
 }
 
 export const useLeadStore = create<LeadState>((set) => ({
@@ -31,6 +32,12 @@ export const useLeadStore = create<LeadState>((set) => ({
       set({ loading: false });
     }
   },
+  updateLead: (id, updatedFields) =>
+    set((state) => ({
+      leads: state.leads.map((l) =>
+        l.id === id ? { ...l, ...updatedFields } : l,
+      ),
+    })),
   removeLead: (id) =>
     set((state) => ({
       leads: state.leads.filter((l) => l.id !== id),

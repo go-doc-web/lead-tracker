@@ -61,4 +61,12 @@ export const leadsApi = {
     });
     if (!res.ok) throw new Error("Failed to delete lead");
   },
+  update: async (id: string, data: Partial<Lead>): Promise<Lead> => {
+    const res = await fetch(`${API_URL}/leads/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    return res.json();
+  },
 };

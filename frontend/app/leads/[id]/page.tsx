@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { Lead } from "@/types/lead";
 import { leadsApi } from "@/api/leads";
 import { ChevronLeft, Loader2, Mail, Calendar, Building2 } from "lucide-react";
-
+import { useLeadStore } from "@/store/useLeadStore";
 import StatusBadge from "../../../components/StatusBadge";
 import Comments from "@/components/Comments";
 
@@ -13,10 +13,22 @@ export default function LeadDetailPage() {
   const params = useParams();
   const router = useRouter();
   const id = params.id;
-
+  const { updateLead } = useLeadStore();
   const [lead, setLead] = useState<Lead | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const handleStatusChange = async (newStatus: string) => {
+    try {
+      await leadsApi.update(lead.id, { status: newStatus as any });
+
+      updateLead(lead.id, { status: newStatus as any });
+
+      setLead((prev) => (prev ? { ...prev, status: newStatus as any } : null));
+    } catch (err) {
+      alert("Помилка при зміні статусу");
+    }
+  };
 
   useEffect(() => {
     const fetchLead = async () => {
@@ -74,7 +86,23 @@ export default function LeadDetailPage() {
                     </span>
                   </div>
                 </div>
-                <StatusBadge s={lead.status} />
+                <select
+                  value={lead.status}
+                  onChange={(e) => handleStatusChange(e.target.value)}
+                  className={`px-4 py-1.5 rounded-xl border text-[11px] font-black uppercase tracking-widest cursor-pointer outline-none transition-all
+                            ${lead.status === "NEW" ? "bg-blue-50 text-blue-600 border-blue-100" : ""}
+                            ${lead.status === "CONTACTED" ? "bg-indigo-50 text-indigo-600 border-indigo-100" : ""}
+                            ${lead.status === "IN_PROGRESS" ? "bg-amber-50 text-amber-600 border-amber-100" : ""}
+                            ${lead.status === "WON" ? "bg-emerald-50 text-emerald-600 border-emerald-100" : ""}
+                            ${lead.status === "LOST" ? "bg-rose-50 text-rose-600 border-rose-100" : ""}
+                            `}
+                >
+                  <option value="NEW">Новий</option>
+                  <option value="CONTACTED">Контакт встановлено</option>
+                  <option value="IN_PROGRESS">В роботі</option>
+                  <option value="WON">Виграно</option>
+                  <option value="LOST">Програно</option>
+                </select>
               </div>
 
               {/* Сітка з деталями */}
