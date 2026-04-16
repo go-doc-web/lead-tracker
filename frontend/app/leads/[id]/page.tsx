@@ -177,7 +177,31 @@ export default function LeadDetailPage() {
                   </div>
                 </div>
 
-                <StatusBadge s={lead.status} />
+                {isEditing ? (
+                  <div className="w-full sm:w-auto">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">
+                      Статус
+                    </label>
+                    <select
+                      className="bg-white border border-slate-200 rounded-xl px-4 py-2 text-[11px] font-black uppercase tracking-widest outline-none cursor-pointer focus:ring-2 focus:ring-blue-100 transition-all"
+                      value={formData.status || "NEW"}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          status: e.target.value as any,
+                        })
+                      }
+                    >
+                      <option value="NEW">Новий</option>
+                      <option value="CONTACTED">Контакт</option>
+                      <option value="IN_PROGRESS">В роботі</option>
+                      <option value="WON">Виграно</option>
+                      <option value="LOST">Програно</option>
+                    </select>
+                  </div>
+                ) : (
+                  <StatusBadge s={lead.status} />
+                )}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-10 py-10 border-y border-slate-50">
