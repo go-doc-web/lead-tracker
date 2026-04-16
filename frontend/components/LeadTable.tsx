@@ -97,7 +97,7 @@ export default function LeadTable({
       {totalPages > 1 && (
         <div className="p-6 border-t border-slate-100 flex justify-between items-center">
           <span className="text-[10px] font-black uppercase text-slate-400">
-            Сторінка {currentPage} з {totalPages}
+            Сторінка {currentPage} ... {totalPages}
           </span>
           <div className="flex gap-2">
             <button
