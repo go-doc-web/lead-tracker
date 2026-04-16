@@ -31,15 +31,7 @@ export const leadsApi = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
-
-    if (!res.ok) {
-      // ДІАГНОСТИКА: виводимо в консоль, що саме не подобається бекенду
-      const errorData = await res.json().catch(() => ({}));
-      console.error("Backend Error Details:", errorData);
-
-      throw new Error(errorData.message || "Error creating lead");
-    }
-
+    if (!res.ok) throw new Error("Error");
     return res.json();
   },
 

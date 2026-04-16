@@ -4,6 +4,7 @@ import { useState } from "react";
 import { X } from "lucide-react";
 import LeadForm, { LeadFormData } from "./LeadForm";
 import { leadsApi } from "@/api/leads";
+import { useLeadStore } from "@/store/useLeadStore";
 
 interface Props {
   isOpen: boolean;
@@ -13,6 +14,7 @@ interface Props {
 
 export default function CreateLeadModal({ isOpen, onClose, onSuccess }: Props) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { addLead } = useLeadStore();
 
   const handleFormSubmit = async (data: LeadFormData) => {
     const cleanData = Object.fromEntries(
@@ -22,7 +24,8 @@ export default function CreateLeadModal({ isOpen, onClose, onSuccess }: Props) {
     );
     try {
       setIsSubmitting(true);
-      await leadsApi.create(cleanData);
+      const newLead = await leadsApi.create(cleanData);
+      addLead(newLead);
       onSuccess();
     } catch (err) {
       console.error(err);

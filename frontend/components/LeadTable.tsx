@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Lead } from "@/types/lead";
-import { leadsApi } from "@/api/leads";
+import { useLeadStore } from "@/store/useLeadStore";
 import { Loader2, Calendar } from "lucide-react";
 import StatusBadge from "../components/StatusBadge";
 
@@ -14,39 +13,29 @@ interface Props {
 
 export default function LeadTable({ search, status }: Props) {
   const router = useRouter();
-  const [leads, setLeads] = useState<Lead[]>([]);
-  const [loading, setLoading] = useState(true);
+
+  const { leads, loading, fetchLeads } = useLeadStore();
 
   const handleRowClick = (id: string): void => {
     router.push(`leads/${id}`);
   };
 
   useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-      try {
-        // Викликаємо наш API з параметрами пошуку
-        const res = await leadsApi.getAll(1, search, status);
-        setLeads(res.data);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
+    const load = () => {
+      fetchLeads(1, search, status);
     };
 
-    // Додаємо невелику затримку (debounce), щоб не спамити бэкенд на кожну літеру
-    const timer = setTimeout(loadData, 300);
+    const timer = setTimeout(load, 300);
     return () => clearTimeout(timer);
-  }, [search, status]);
+  }, [search, status, fetchLeads]);
 
-  if (loading && leads.length === 0)
+  if (loading && leads.length === 0) {
     return (
       <div className="flex justify-center p-20">
         <Loader2 className="animate-spin text-blue-600" size={32} />
       </div>
     );
-
+  }
   return (
     <div className="w-full">
       {/* ДЕСКТОП */}
