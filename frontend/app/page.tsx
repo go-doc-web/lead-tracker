@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { Plus, Search, SlidersHorizontal } from "lucide-react";
 import CreateLeadModal from "@/components/CreateLeadModal";
+import StatsCards from "@/components/StatsCards";
 
 const LeadTable = dynamic(() => import("@/components/LeadTable"), {
   ssr: false,
@@ -73,7 +74,7 @@ export default function LeadsPage() {
             </button>
           </div>
         </div>
-
+        <StatsCards />
         {/* Список лідів */}
         <div className="bg-white rounded-3xl border border-slate-200 shadow-[0_1px_3px_rgba(0,0,0,0.05)] overflow-hidden">
           <LeadTable search={searchQuery} status={statusFilter} />
