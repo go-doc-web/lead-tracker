@@ -26,6 +26,7 @@ docker-compose up --build
 Важливо: Оскільки база даних ініціалізується вперше, потрібно створити структуру таблиць за допомогою Prisma:
 
 ```bash
+docker-compose exec backend npx prisma generate
 docker-compose exec backend npx prisma db push
 ```
 
@@ -92,5 +93,32 @@ Docker: Створено docker-compose.yml для швидкого локаль
 - `Comment`: коментарі, прив'язані до конкретного ліда.
 
 ```
+model Lead {
+  id        String    @id @default(uuid())
+  name      String
+  email     String?
+  company   String?
+  status    Status    @default(NEW)
+  value     Float     @default(0)
+  notes     String?
+  comments  Comment[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
 
+model Comment {
+  id        String   @id @default(uuid())
+  text      String
+  leadId    String
+  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+enum Status {
+  NEW
+  CONTACTED
+  IN_PROGRESS
+  WON
+  LOST
+}
 ```
