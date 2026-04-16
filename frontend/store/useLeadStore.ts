@@ -14,6 +14,7 @@ interface LeadState {
   ) => Promise<void>;
   // Функція для швидкого додавання ліда в список без перезапиту до БД
   addLead: (lead: Lead) => void;
+  removeLead: (id: string) => void;
 }
 
 export const useLeadStore = create<LeadState>((set) => ({
@@ -30,6 +31,10 @@ export const useLeadStore = create<LeadState>((set) => ({
       set({ loading: false });
     }
   },
+  removeLead: (id) =>
+    set((state) => ({
+      leads: state.leads.filter((l) => l.id !== id),
+    })),
 
   addLead: (lead) =>
     set((state) => ({

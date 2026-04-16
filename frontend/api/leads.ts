@@ -54,4 +54,11 @@ export const leadsApi = {
     if (!res.ok) throw new Error("Error");
     return res.json();
   },
+
+  delete: async (id: string): Promise<void> => {
+    const res = await fetch(`${API_URL}/leads/${id}`, {
+      method: "DELETE",
+    });
+    if (!res.ok) throw new Error("Failed to delete lead");
+  },
 };

@@ -1,9 +1,18 @@
 "use client";
-
+import dynamic from "next/dynamic";
 import { useState } from "react";
-import LeadTable from "@/components/LeadTable";
+
 import { Plus, Search, SlidersHorizontal } from "lucide-react";
 import CreateLeadModal from "@/components/CreateLeadModal";
+
+const LeadTable = dynamic(() => import("@/components/LeadTable"), {
+  ssr: false,
+  loading: () => (
+    <div className="p-20 text-center text-slate-400">
+      Завантаження таблиці...
+    </div>
+  ),
+});
 
 export default function LeadsPage() {
   const [searchQuery, setSearchQuery] = useState("");

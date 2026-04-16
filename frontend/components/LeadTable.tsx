@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect } from "react";
+
 import { useRouter } from "next/navigation";
 import { useLeadStore } from "@/store/useLeadStore";
-import { Loader2, Calendar } from "lucide-react";
+import { Loader2, Calendar, Trash2 } from "lucide-react";
 import StatusBadge from "../components/StatusBadge";
+import { leadsApi } from "@/api/leads";
 
 interface Props {
   search: string;
@@ -14,10 +16,22 @@ interface Props {
 export default function LeadTable({ search, status }: Props) {
   const router = useRouter();
 
-  const { leads, loading, fetchLeads } = useLeadStore();
+  const { leads, loading, fetchLeads, removeLead } = useLeadStore();
 
   const handleRowClick = (id: string): void => {
     router.push(`leads/${id}`);
+  };
+
+  const handleDelete = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    if (!confirm("Удалить этого клиента?")) return;
+
+    try {
+      await leadsApi.delete(id);
+      removeLead(id);
+    } catch (err) {
+      alert("Ошибка при удалении");
+    }
   };
 
   useEffect(() => {
@@ -36,6 +50,7 @@ export default function LeadTable({ search, status }: Props) {
       </div>
     );
   }
+
   return (
     <div className="w-full">
       {/* ДЕСКТОП */}
@@ -55,6 +70,7 @@ export default function LeadTable({ search, status }: Props) {
               <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 text-right">
                 Бюджет
               </th>
+              <th className="px-6 py-4 w-10"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -80,6 +96,15 @@ export default function LeadTable({ search, status }: Props) {
                 </td>
                 <td className="px-6 py-4 text-right font-bold text-slate-900">
                   {lead.value ? `${lead.value.toLocaleString()} $` : "—"}
+                </td>
+                <td className="px-6 py-4 text-right">
+                  <button
+                    onClick={(e) => handleDelete(e, lead.id)}
+                    className="p-2 hover:bg-rose-50 rounded-xl text-rose-400 hover:text-rose-600 transition-all opacity-0 group-hover:opacity-100"
+                    title="Видалити"
+                  >
+                    <Trash2 size={18} />
+                  </button>
                 </td>
               </tr>
             ))}
