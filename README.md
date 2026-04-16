@@ -44,6 +44,27 @@ docker-compose exec backend npx prisma db push
 - **Backend API**: [http://localhost:3001/api](http://localhost:3001/api)
 - **Swagger Documentation**: [http://localhost:3001/api/docs](http://localhost:3001/api/docs)
 
+# 🌐 Живе демо (Links)
+
+| Service                     | URL                                                                                                  |
+| :-------------------------- | :--------------------------------------------------------------------------------------------------- |
+| **🌍 Frontend (Vercel)**    | [https://lead-tracker-woad.vercel.app/](https://lead-tracker-woad.vercel.app/)                       |
+| **⚙️ Backend API (Render)** | [https://lead-tracker-eqiy.onrender.com/api/leads](https://lead-tracker-eqiy.onrender.com/api/leads) |
+| **📄 Swagger UI (Docs)**    | [https://lead-tracker-eqiy.onrender.com/api/docs](https://lead-tracker-eqiy.onrender.com/api/docs)   |
+
+---
+
+## 💡 Важлива примітка щодо деплою
+
+Бекенд розміщено на безкоштовному тарифі **Render.com**.
+
+⚠️ **Особливість:** Якщо сервіс не використовувався певний час, він переходить у «сплячий режим».
+
+- При першому відкритті сайту завантаження даних може тривати **30-50 секунд**.
+- Будь ласка, зачекайте або оновіть сторінку через хвилину — після «пробудження» сервер працюватиме стабільно та швидко.
+
+---
+
 ## 📋 Виконані вимоги ТЗ
 
 ### Backend:
