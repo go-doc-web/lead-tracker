@@ -1,0 +1,43 @@
+version: "3.8"
+
+services:
+  # База данных PostgreSQL
+  db:
+    image: postgres:15-alpine
+    container_name: crm-db
+    restart: always
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: lead_tracker
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # Backend (NestJS)
+  backend:
+    build: ./backend
+    container_name: crm-backend
+    restart: always
+    ports:
+      - "3001:3001"
+    environment:
+      DATABASE_URL: "postgresql://user:password@db:5432/lead_tracker?schema=public"
+    depends_on:
+      - db
+
+  # Frontend (Next.js)
+  frontend:
+    build: ./frontend
+    container_name: crm-frontend
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: "http://localhost:3001/api"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
