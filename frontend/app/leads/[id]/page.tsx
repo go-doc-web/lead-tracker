@@ -1,5 +1,5 @@
 "use client";
-
+import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -25,30 +25,25 @@ export default function LeadDetailPage() {
   const router = useRouter();
   const { updateLead } = useLeadStore();
 
-  const [lead, setLead] = useState<Lead | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [formData, setFormData] = useState<Partial<Lead>>({});
 
-  useEffect(() => {
-    // if (!lead) return;
+  const {
+    data: lead,
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ["lead", params.id],
+    queryFn: () => leadsApi.getOne(params.id as string),
+    enabled: !!params.id,
+  });
 
-    const fetchLead = async () => {
-      try {
-        setLoading(true);
-        const data = await leadsApi.getOne(params.id as string);
-        setLead(data);
-        setFormData(data);
-      } catch (err) {
-        setError("Клієнта не знайдено");
-      } finally {
-        setLoading(false);
-      }
-    };
-    if (params.id) fetchLead();
-  }, [params.id]);
+  useEffect(() => {
+    if (lead) {
+      setFormData(lead);
+    }
+  }, [lead]);
 
   const handleSave = async () => {
     if (!lead) return;
@@ -72,7 +67,6 @@ export default function LeadDetailPage() {
         ...updatedResponse,
       };
 
-      setLead(finalLead);
       updateLead(lead!.id, finalLead);
       setIsEditing(false);
       toast.success("Дані збережено");
@@ -100,13 +94,13 @@ export default function LeadDetailPage() {
         });
   };
 
-  if (loading)
+  if (isLoading)
     return (
       <div className="flex justify-center p-20">
         <Loader2 className="animate-spin text-blue-600" />
       </div>
     );
-  if (error || !lead)
+  if (isError || !lead)
     return (
       <div className="p-20 text-center text-red-500 font-bold">{error}</div>
     );
