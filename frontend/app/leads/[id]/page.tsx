@@ -1,9 +1,12 @@
 "use client";
-
-import { useEffect, useState } from "react";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Lead } from "@/types/lead";
+import { toast } from "sonner";
+import { Lead, LeadStatus } from "@/types/lead";
+
 import { leadsApi } from "@/api/leads";
+import { formatDate } from "@/utils/formatDate";
 import {
   ChevronLeft,
   Loader2,
@@ -23,83 +26,65 @@ export default function LeadDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { updateLead } = useLeadStore();
+  const queryClient = useQueryClient();
 
-  const [lead, setLead] = useState<Lead | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+
   const [formData, setFormData] = useState<Partial<Lead>>({});
 
-  useEffect(() => {
-    const fetchLead = async () => {
-      try {
-        setLoading(true);
-        const data = await leadsApi.getOne(params.id as string);
-        setLead(data);
-        setFormData(data);
-      } catch (err) {
-        setError("Клієнта не знайдено");
-      } finally {
-        setLoading(false);
-      }
-    };
-    if (params.id) fetchLead();
-  }, [params.id]);
+  const {
+    data: lead,
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ["lead", params.id],
+    queryFn: () => leadsApi.getOne(params.id as string),
+    enabled: !!params.id,
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: (payload: Partial<Lead>) => leadsApi.update(lead!.id, payload),
+    onSuccess: (updatedResponse) => {
+      queryClient.setQueryData(["lead", params.id], updatedResponse);
+      updateLead(lead!.id, updatedResponse);
+      setIsEditing(false);
+      toast.success("Дані успішно збережено");
+    },
+    onError: (error) => {
+      console.error("Mutation error:", error);
+      toast.error("Помилка при збереженні");
+    },
+  });
 
   const handleSave = async () => {
-    try {
-      // 1. Створюємо чистий об'єкт для відправки (БЕЗ id, дат та коментарів)
-      const {
-        id,
-        createdAt,
-        updatedAt,
-        comments,
-        _count, // якщо є
-        ...dataToSave
-      } = formData as any;
+    if (!lead) return;
 
-      // 2. Відправляємо ТІЛЬКИ дозволені поля
-      const updatedResponse = await leadsApi.update(lead!.id, dataToSave);
-
-      // 3. Оновлюємо стейт, поєднуючи старі дані з новими
-      const finalLead = {
-        ...lead,
-        ...updatedResponse,
-      } as Lead;
-
-      setLead(finalLead);
-      updateLead(lead!.id, finalLead);
-      setIsEditing(false);
-    } catch (err) {
-      console.error("Помилка при збереженні:", err);
-      alert("Помилка: сервер відхилив запит (Bad Request). Перевірте поля.");
-    }
+    const payload: Partial<Lead> = {
+      name: formData.name,
+      email: formData.email,
+      status: formData.status,
+      company: formData.company,
+      value: formData.value,
+      notes: formData.notes,
+    };
+    console.log("payload", payload);
+    updateMutation.mutate(payload);
   };
 
-  const formatDate = (date: any) => {
-    if (!date) return "—";
-    const d = new Date(date);
-    return isNaN(d.getTime())
-      ? "Щойно"
-      : d.toLocaleString("uk-UA", {
-          day: "numeric",
-          month: "long",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        });
-  };
-
-  if (loading)
+  if (isLoading)
     return (
       <div className="flex justify-center p-20">
         <Loader2 className="animate-spin text-blue-600" />
       </div>
     );
-  if (error || !lead)
+  if (isError || !lead)
     return (
-      <div className="p-20 text-center text-red-500 font-bold">{error}</div>
+      <div className="p-20 text-center text-red-500 font-bold">{isError}</div>
     );
+
+  const nameError = formData.name === "";
+  const inputStyles =
+    "w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-2 text-sm font-medium outline-none focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all";
 
   return (
     <main className="min-h-screen bg-[#F8FAFC] p-4 sm:p-8 text-slate-900 font-sans">
@@ -122,19 +107,32 @@ export default function LeadDetailPage() {
           ) : (
             <div className="flex gap-2">
               <button
+                disabled={
+                  updateMutation.isPending || !(formData.name ?? lead?.name)
+                }
                 onClick={() => {
                   setIsEditing(false);
-                  setFormData(lead);
+                  setFormData({});
                 }}
                 className="px-5 py-2.5 text-slate-400 font-black text-[10px] uppercase tracking-widest"
               >
                 Скасувати
               </button>
               <button
+                disabled={
+                  updateMutation.isPending ||
+                  formData.name === "" ||
+                  (!formData.name && !lead?.name)
+                }
                 onClick={handleSave}
                 className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all"
               >
-                <Check size={14} /> Зберегти
+                {updateMutation.isPending ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <Check size={14} />
+                )}
+                {updateMutation.isPending ? "Збереження..." : "Зберегти"}
               </button>
             </div>
           )}
@@ -146,13 +144,20 @@ export default function LeadDetailPage() {
               <div className="flex flex-col sm:flex-row justify-between items-start gap-6 mb-10">
                 <div className="flex-1 w-full">
                   {isEditing ? (
-                    <input
-                      className="text-2xl sm:text-4xl font-black text-slate-900 outline-none border-b-2 border-blue-500 w-full bg-transparent pb-1"
-                      value={formData.name || ""}
-                      onChange={(e) =>
-                        setFormData({ ...formData, name: e.target.value })
-                      }
-                    />
+                    <div className="space-y-1">
+                      <input
+                        className={`text-2xl sm:text-4xl font-black text-slate-900 outline-none border-b-2 border-blue-500 w-full bg-transparent pb-1 ${nameError ? "border-red-500 text-red-900" : "border-blue-500 text-slate-900"} `}
+                        value={formData.name ?? lead?.name ?? ""}
+                        onChange={(e) =>
+                          setFormData({ ...formData, name: e.target.value })
+                        }
+                      />
+                      {nameError && (
+                        <p className="text-red-500 text-[10px] font-bold uppercase tracking-wider animate-pulse">
+                          Ім'я не може бути порожнім
+                        </p>
+                      )}
+                    </div>
                   ) : (
                     <h1 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
                       {lead.name}
@@ -163,8 +168,8 @@ export default function LeadDetailPage() {
                     <Mail size={16} className="text-slate-300" />
                     {isEditing ? (
                       <input
-                        className="text-sm font-medium outline-none border-b border-slate-100 w-full"
-                        value={formData.email || ""}
+                        className={inputStyles}
+                        value={formData.email ?? lead?.email ?? ""}
                         onChange={(e) =>
                           setFormData({ ...formData, email: e.target.value })
                         }
@@ -184,11 +189,11 @@ export default function LeadDetailPage() {
                     </label>
                     <select
                       className="bg-white border border-slate-200 rounded-xl px-4 py-2 text-[11px] font-black uppercase tracking-widest outline-none cursor-pointer focus:ring-2 focus:ring-blue-100 transition-all"
-                      value={formData.status || "NEW"}
+                      value={formData.status ?? lead.status ?? "NEW"}
                       onChange={(e) =>
                         setFormData({
                           ...formData,
-                          status: e.target.value as any,
+                          status: e.target.value as LeadStatus,
                         })
                       }
                     >
@@ -211,8 +216,8 @@ export default function LeadDetailPage() {
                   </label>
                   {isEditing ? (
                     <input
-                      className="w-full font-bold text-slate-900 outline-none border-b border-slate-100"
-                      value={formData.company || ""}
+                      className={inputStyles}
+                      value={formData.company ?? lead?.company ?? ""}
                       onChange={(e) =>
                         setFormData({ ...formData, company: e.target.value })
                       }
@@ -230,8 +235,8 @@ export default function LeadDetailPage() {
                   {isEditing ? (
                     <input
                       type="number"
-                      className="w-full text-xl font-black text-blue-600 outline-none border-b border-slate-100"
-                      value={formData.value || 0}
+                      className={inputStyles}
+                      value={formData.value ?? lead?.value ?? 0}
                       onChange={(e) =>
                         setFormData({
                           ...formData,
@@ -253,8 +258,9 @@ export default function LeadDetailPage() {
                 </label>
                 {isEditing ? (
                   <textarea
-                    className="w-full bg-slate-50 rounded-[24px] p-6 text-slate-700 text-sm border border-slate-100 outline-none focus:border-blue-200 transition-all min-h-[120px]"
-                    value={formData.notes || ""}
+                    className={inputStyles}
+                    // className="w-full bg-slate-50 rounded-[24px] p-6 text-slate-700 text-sm border border-slate-100 outline-none focus:border-blue-200 transition-all min-h-[120px]"
+                    value={formData.notes ?? lead?.notes ?? ""}
                     onChange={(e) =>
                       setFormData({ ...formData, notes: e.target.value })
                     }
