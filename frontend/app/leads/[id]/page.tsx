@@ -32,6 +32,8 @@ export default function LeadDetailPage() {
   const [formData, setFormData] = useState<Partial<Lead>>({});
 
   useEffect(() => {
+    if (!lead) return;
+
     const fetchLead = async () => {
       try {
         setLoading(true);
@@ -49,24 +51,21 @@ export default function LeadDetailPage() {
 
   const handleSave = async () => {
     try {
-      // 1. Створюємо чистий об'єкт для відправки (БЕЗ id, дат та коментарів)
-      const {
-        id,
-        createdAt,
-        updatedAt,
-        comments,
-        _count, // якщо є
-        ...dataToSave
-      } = formData as any;
+      const payload: Partial<Lead> = {
+        name: formData.name,
+        email: formData.email,
+        status: formData.status,
+        company: formData.company,
+        value: formData.value,
+        notes: formData.notes,
+      };
 
-      // 2. Відправляємо ТІЛЬКИ дозволені поля
-      const updatedResponse = await leadsApi.update(lead!.id, dataToSave);
+      const updatedResponse = await leadsApi.update(lead!.id, payload);
 
-      // 3. Оновлюємо стейт, поєднуючи старі дані з новими
       const finalLead = {
         ...lead,
         ...updatedResponse,
-      } as Lead;
+      };
 
       setLead(finalLead);
       updateLead(lead!.id, finalLead);
