@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Lead } from "@/types/lead";
 import { leadsApi } from "@/api/leads";
 import {
@@ -70,9 +71,12 @@ export default function LeadDetailPage() {
       setLead(finalLead);
       updateLead(lead!.id, finalLead);
       setIsEditing(false);
+      toast.success("Дані збережено");
     } catch (err) {
       console.error("Помилка при збереженні:", err);
-      alert("Помилка: сервер відхилив запит (Bad Request). Перевірте поля.");
+      toast.error(
+        "Помилка: сервер відхилив запит (Bad Request). Перевірте поля.",
+      );
     }
   };
 
