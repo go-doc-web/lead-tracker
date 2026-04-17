@@ -95,6 +95,8 @@ export default function LeadDetailPage() {
     );
 
   const nameError = formData.name === "";
+  const inputStyles =
+    "w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-2 text-sm font-medium outline-none focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all";
 
   return (
     <main className="min-h-screen bg-[#F8FAFC] p-4 sm:p-8 text-slate-900 font-sans">
@@ -178,7 +180,7 @@ export default function LeadDetailPage() {
                     <Mail size={16} className="text-slate-300" />
                     {isEditing ? (
                       <input
-                        className="text-sm font-medium outline-none border-b border-slate-100 w-full"
+                        className={inputStyles}
                         value={formData.email ?? lead?.email ?? ""}
                         onChange={(e) =>
                           setFormData({ ...formData, email: e.target.value })
@@ -226,7 +228,7 @@ export default function LeadDetailPage() {
                   </label>
                   {isEditing ? (
                     <input
-                      className="w-full font-bold text-slate-900 outline-none border-b border-slate-100"
+                      className={inputStyles}
                       value={formData.company ?? lead?.company ?? ""}
                       onChange={(e) =>
                         setFormData({ ...formData, company: e.target.value })
@@ -245,7 +247,7 @@ export default function LeadDetailPage() {
                   {isEditing ? (
                     <input
                       type="number"
-                      className="w-full text-xl font-black text-blue-600 outline-none border-b border-slate-100"
+                      className={inputStyles}
                       value={formData.value ?? lead?.value ?? 0}
                       onChange={(e) =>
                         setFormData({
@@ -268,7 +270,8 @@ export default function LeadDetailPage() {
                 </label>
                 {isEditing ? (
                   <textarea
-                    className="w-full bg-slate-50 rounded-[24px] p-6 text-slate-700 text-sm border border-slate-100 outline-none focus:border-blue-200 transition-all min-h-[120px]"
+                    className={inputStyles}
+                    // className="w-full bg-slate-50 rounded-[24px] p-6 text-slate-700 text-sm border border-slate-100 outline-none focus:border-blue-200 transition-all min-h-[120px]"
                     value={formData.notes ?? lead?.notes ?? ""}
                     onChange={(e) =>
                       setFormData({ ...formData, notes: e.target.value })
