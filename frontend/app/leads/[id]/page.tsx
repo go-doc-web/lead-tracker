@@ -1,10 +1,12 @@
 "use client";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Lead } from "@/types/lead";
+import { Lead, LeadStatus } from "@/types/lead";
+
 import { leadsApi } from "@/api/leads";
+import { formatDate } from "@/utils/formatDate";
 import {
   ChevronLeft,
   Loader2,
@@ -67,20 +69,6 @@ export default function LeadDetailPage() {
     };
     console.log("payload", payload);
     updateMutation.mutate(payload);
-  };
-
-  const formatDate = (date: any) => {
-    if (!date) return "—";
-    const d = new Date(date);
-    return isNaN(d.getTime())
-      ? "Щойно"
-      : d.toLocaleString("uk-UA", {
-          day: "numeric",
-          month: "long",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        });
   };
 
   if (isLoading)
@@ -205,7 +193,7 @@ export default function LeadDetailPage() {
                       onChange={(e) =>
                         setFormData({
                           ...formData,
-                          status: e.target.value as any,
+                          status: e.target.value as LeadStatus,
                         })
                       }
                     >
