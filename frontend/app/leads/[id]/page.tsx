@@ -29,10 +29,11 @@ export default function LeadDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState<boolean>(false);
   const [formData, setFormData] = useState<Partial<Lead>>({});
 
   useEffect(() => {
-    if (!lead) return;
+    // if (!lead) return;
 
     const fetchLead = async () => {
       try {
@@ -50,7 +51,10 @@ export default function LeadDetailPage() {
   }, [params.id]);
 
   const handleSave = async () => {
+    if (!lead) return;
+
     try {
+      setIsSaving(true);
       const payload: Partial<Lead> = {
         name: formData.name,
         email: formData.email,
@@ -59,6 +63,7 @@ export default function LeadDetailPage() {
         value: formData.value,
         notes: formData.notes,
       };
+      console.log("payload", payload);
 
       const updatedResponse = await leadsApi.update(lead!.id, payload);
 
@@ -76,6 +81,8 @@ export default function LeadDetailPage() {
       toast.error(
         "Помилка: сервер відхилив запит (Bad Request). Перевірте поля.",
       );
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -125,6 +132,7 @@ export default function LeadDetailPage() {
           ) : (
             <div className="flex gap-2">
               <button
+                disabled={isSaving}
                 onClick={() => {
                   setIsEditing(false);
                   setFormData(lead);
@@ -134,10 +142,16 @@ export default function LeadDetailPage() {
                 Скасувати
               </button>
               <button
+                disabled={isSaving}
                 onClick={handleSave}
                 className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all"
               >
-                <Check size={14} /> Зберегти
+                {isSaving ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <Check size={14} />
+                )}
+                {isSaving ? "Збереження..." : "Зберегти"}
               </button>
             </div>
           )}
