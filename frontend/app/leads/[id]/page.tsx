@@ -94,6 +94,8 @@ export default function LeadDetailPage() {
       <div className="p-20 text-center text-red-500 font-bold">{isError}</div>
     );
 
+  const nameError = formData.name === "";
+
   return (
     <main className="min-h-screen bg-[#F8FAFC] p-4 sm:p-8 text-slate-900 font-sans">
       <div className="max-w-5xl mx-auto">
@@ -152,13 +154,20 @@ export default function LeadDetailPage() {
               <div className="flex flex-col sm:flex-row justify-between items-start gap-6 mb-10">
                 <div className="flex-1 w-full">
                   {isEditing ? (
-                    <input
-                      className="text-2xl sm:text-4xl font-black text-slate-900 outline-none border-b-2 border-blue-500 w-full bg-transparent pb-1"
-                      value={formData.name ?? lead?.name ?? ""}
-                      onChange={(e) =>
-                        setFormData({ ...formData, name: e.target.value })
-                      }
-                    />
+                    <div className="space-y-1">
+                      <input
+                        className={`text-2xl sm:text-4xl font-black text-slate-900 outline-none border-b-2 border-blue-500 w-full bg-transparent pb-1 ${nameError ? "border-red-500 text-red-900" : "border-blue-500 text-slate-900"} `}
+                        value={formData.name ?? lead?.name ?? ""}
+                        onChange={(e) =>
+                          setFormData({ ...formData, name: e.target.value })
+                        }
+                      />
+                      {nameError && (
+                        <p className="text-red-500 text-[10px] font-bold uppercase tracking-wider animate-pulse">
+                          Ім'я не може бути порожнім
+                        </p>
+                      )}
+                    </div>
                   ) : (
                     <h1 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
                       {lead.name}
