@@ -40,12 +40,6 @@ export default function LeadDetailPage() {
     enabled: !!params.id,
   });
 
-  useEffect(() => {
-    if (lead && !isEditing) {
-      setFormData(lead);
-    }
-  }, [lead, isEditing]);
-
   const updateMutation = useMutation({
     mutationFn: (payload: Partial<Lead>) => leadsApi.update(lead!.id, payload),
     onSuccess: (updatedResponse) => {
@@ -154,7 +148,7 @@ export default function LeadDetailPage() {
                   {isEditing ? (
                     <input
                       className="text-2xl sm:text-4xl font-black text-slate-900 outline-none border-b-2 border-blue-500 w-full bg-transparent pb-1"
-                      value={formData.name || ""}
+                      value={formData.name ?? lead?.name ?? ""}
                       onChange={(e) =>
                         setFormData({ ...formData, name: e.target.value })
                       }
@@ -170,7 +164,7 @@ export default function LeadDetailPage() {
                     {isEditing ? (
                       <input
                         className="text-sm font-medium outline-none border-b border-slate-100 w-full"
-                        value={formData.email || ""}
+                        value={formData.email ?? lead?.email ?? ""}
                         onChange={(e) =>
                           setFormData({ ...formData, email: e.target.value })
                         }
@@ -218,7 +212,7 @@ export default function LeadDetailPage() {
                   {isEditing ? (
                     <input
                       className="w-full font-bold text-slate-900 outline-none border-b border-slate-100"
-                      value={formData.company || ""}
+                      value={formData.company ?? lead?.company ?? ""}
                       onChange={(e) =>
                         setFormData({ ...formData, company: e.target.value })
                       }
@@ -237,7 +231,7 @@ export default function LeadDetailPage() {
                     <input
                       type="number"
                       className="w-full text-xl font-black text-blue-600 outline-none border-b border-slate-100"
-                      value={formData.value || 0}
+                      value={formData.value ?? lead?.value ?? 0}
                       onChange={(e) =>
                         setFormData({
                           ...formData,
@@ -260,7 +254,7 @@ export default function LeadDetailPage() {
                 {isEditing ? (
                   <textarea
                     className="w-full bg-slate-50 rounded-[24px] p-6 text-slate-700 text-sm border border-slate-100 outline-none focus:border-blue-200 transition-all min-h-[120px]"
-                    value={formData.notes || ""}
+                    value={formData.notes ?? lead?.notes ?? ""}
                     onChange={(e) =>
                       setFormData({ ...formData, notes: e.target.value })
                     }
