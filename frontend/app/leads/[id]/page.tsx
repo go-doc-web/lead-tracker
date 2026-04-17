@@ -115,17 +115,23 @@ export default function LeadDetailPage() {
           ) : (
             <div className="flex gap-2">
               <button
-                disabled={updateMutation.isPending}
+                disabled={
+                  updateMutation.isPending || !(formData.name ?? lead?.name)
+                }
                 onClick={() => {
                   setIsEditing(false);
-                  setFormData(lead);
+                  setFormData({});
                 }}
                 className="px-5 py-2.5 text-slate-400 font-black text-[10px] uppercase tracking-widest"
               >
                 Скасувати
               </button>
               <button
-                disabled={updateMutation.isPending}
+                disabled={
+                  updateMutation.isPending ||
+                  formData.name === "" ||
+                  (!formData.name && !lead?.name)
+                }
                 onClick={handleSave}
                 className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all"
               >
@@ -184,7 +190,7 @@ export default function LeadDetailPage() {
                     </label>
                     <select
                       className="bg-white border border-slate-200 rounded-xl px-4 py-2 text-[11px] font-black uppercase tracking-widest outline-none cursor-pointer focus:ring-2 focus:ring-blue-100 transition-all"
-                      value={formData.status || "NEW"}
+                      value={formData.status ?? lead.status ?? "NEW"}
                       onChange={(e) =>
                         setFormData({
                           ...formData,
