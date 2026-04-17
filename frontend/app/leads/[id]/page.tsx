@@ -1,5 +1,5 @@
 "use client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -24,9 +24,10 @@ export default function LeadDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { updateLead } = useLeadStore();
+  const queryClient = useQueryClient();
 
   const [isEditing, setIsEditing] = useState(false);
-  const [isSaving, setIsSaving] = useState<boolean>(false);
+
   const [formData, setFormData] = useState<Partial<Lead>>({});
 
   const {
@@ -40,44 +41,38 @@ export default function LeadDetailPage() {
   });
 
   useEffect(() => {
-    if (lead) {
+    if (lead && !isEditing) {
       setFormData(lead);
     }
-  }, [lead]);
+  }, [lead, isEditing]);
+
+  const updateMutation = useMutation({
+    mutationFn: (payload: Partial<Lead>) => leadsApi.update(lead!.id, payload),
+    onSuccess: (updatedResponse) => {
+      queryClient.setQueryData(["lead", params.id], updatedResponse);
+      updateLead(lead!.id, updatedResponse);
+      setIsEditing(false);
+      toast.success("Дані успішно збережено");
+    },
+    onError: (error) => {
+      console.error("Mutation error:", error);
+      toast.error("Помилка при збереженні");
+    },
+  });
 
   const handleSave = async () => {
     if (!lead) return;
 
-    try {
-      setIsSaving(true);
-      const payload: Partial<Lead> = {
-        name: formData.name,
-        email: formData.email,
-        status: formData.status,
-        company: formData.company,
-        value: formData.value,
-        notes: formData.notes,
-      };
-      console.log("payload", payload);
-
-      const updatedResponse = await leadsApi.update(lead!.id, payload);
-
-      const finalLead = {
-        ...lead,
-        ...updatedResponse,
-      };
-
-      updateLead(lead!.id, finalLead);
-      setIsEditing(false);
-      toast.success("Дані збережено");
-    } catch (err) {
-      console.error("Помилка при збереженні:", err);
-      toast.error(
-        "Помилка: сервер відхилив запит (Bad Request). Перевірте поля.",
-      );
-    } finally {
-      setIsSaving(false);
-    }
+    const payload: Partial<Lead> = {
+      name: formData.name,
+      email: formData.email,
+      status: formData.status,
+      company: formData.company,
+      value: formData.value,
+      notes: formData.notes,
+    };
+    console.log("payload", payload);
+    updateMutation.mutate(payload);
   };
 
   const formatDate = (date: any) => {
@@ -102,7 +97,7 @@ export default function LeadDetailPage() {
     );
   if (isError || !lead)
     return (
-      <div className="p-20 text-center text-red-500 font-bold">{error}</div>
+      <div className="p-20 text-center text-red-500 font-bold">{isError}</div>
     );
 
   return (
@@ -126,7 +121,7 @@ export default function LeadDetailPage() {
           ) : (
             <div className="flex gap-2">
               <button
-                disabled={isSaving}
+                disabled={updateMutation.isPending}
                 onClick={() => {
                   setIsEditing(false);
                   setFormData(lead);
@@ -136,16 +131,16 @@ export default function LeadDetailPage() {
                 Скасувати
               </button>
               <button
-                disabled={isSaving}
+                disabled={updateMutation.isPending}
                 onClick={handleSave}
                 className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all"
               >
-                {isSaving ? (
+                {updateMutation.isPending ? (
                   <Loader2 size={14} className="animate-spin" />
                 ) : (
                   <Check size={14} />
                 )}
-                {isSaving ? "Збереження..." : "Зберегти"}
+                {updateMutation.isPending ? "Збереження..." : "Зберегти"}
               </button>
             </div>
           )}
