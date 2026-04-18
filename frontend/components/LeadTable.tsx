@@ -1,45 +1,45 @@
 "use client";
 
-import { useLeadStore } from "@/store/useLeadStore";
 import { useRouter } from "next/navigation";
+import { Lead } from "@/types/lead";
 import StatusBadge from "./StatusBadge";
-import { useEffect } from "react";
 import { Trash2 } from "lucide-react"; // Імпортуємо іконку
 
-export default function LeadTable({
-  search,
-  status,
-}: {
-  search: string;
-  status: string;
-}) {
-  const router = useRouter();
-  // Додаємо removeLead зі стору
-  const {
-    leads,
-    loading,
-    totalPages,
-    currentPage,
-    fetchLeads,
-    sort,
-    order,
-    removeLead,
-  } = useLeadStore();
-
-  useEffect(() => {
-    fetchLeads(currentPage, search, status, sort, order);
-  }, [search, status, sort, order, currentPage, fetchLeads]);
-
-  const handleDelete = async (e: React.MouseEvent, id: string) => {
-    e.stopPropagation(); // Щоб не перейшло на сторінку ліда при натисканні на видалення
-    if (confirm("Ви впевнені, що хочете видалити цього клієнта?")) {
-      await removeLead(id);
-    }
+interface LeadTableProps {
+  leads?: Lead[];
+  meta?: {
+    totalItems: number;
+    itemCount: number;
+    itemsPerPage: number;
+    totalPages: number;
+    currentPage: number;
   };
+  isLoading: boolean;
+  // ... другие пропсы, если нужны
+}
 
-  if (loading && leads.length === 0)
+export default function LeadTable({
+  data: leads = [],
+  meta,
+  isLoading,
+}: LeadTableProps) {
+  const router = useRouter();
+
+  console.log("leads", leads);
+  console.log("meta", meta);
+
+  if (isLoading && (!leads || leads.length === 0)) {
     return <div className="p-20 text-center">Завантаження...</div>;
+  }
 
+  if ((!isLoading && !leads) || leads.length === 0) {
+    return (
+      <div className="p-20 text-center text-slate-400">Нічого не знайдено</div>
+    );
+  }
+
+  const totalPages = meta?.totalPages || 0;
+  const currentPage = meta?.currentPage || 1;
   return (
     <div className="bg-white rounded-[32px] border border-slate-200 overflow-hidden shadow-sm">
       <table className="w-full text-left">
@@ -59,7 +59,7 @@ export default function LeadTable({
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100">
-          {leads.map((lead) => (
+          {leads.map((lead: Lead) => (
             <tr
               key={lead.id}
               onClick={() => router.push(`/leads/${lead.id}`)}

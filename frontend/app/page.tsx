@@ -38,8 +38,6 @@ export default function LeadsPage() {
     placeholderData: (previousData) => previousData,
   });
 
-  console.log("leads", leads);
-
   useEffect(() => {
     const timoutId = setTimeout(() => {
       setDebouncedSearch(searchQuery);
@@ -118,7 +116,7 @@ export default function LeadsPage() {
         <StatsCards />
 
         <div className="mt-8">
-          <LeadTable search={searchQuery} status={statusFilter} {...leads} />
+          <LeadTable {...leads} isLoading={isLoading} />
         </div>
       </div>
 
