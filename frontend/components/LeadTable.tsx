@@ -1,9 +1,11 @@
 "use client";
-
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { Lead } from "@/types/lead";
+import { leadsApi } from "@/api/leads";
 import StatusBadge from "./StatusBadge";
 import { Trash2 } from "lucide-react"; // Імпортуємо іконку
+import { toast } from "sonner";
 
 interface LeadTableProps {
   data?: Lead[];
@@ -23,9 +25,25 @@ export default function LeadTable({
   onPageChange,
 }: LeadTableProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
 
-  console.log("leads", leads);
-  console.log("meta", meta);
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => leadsApi.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
+      toast.success("Клієнта видалено");
+    },
+    onError: () => {
+      toast.error("Не вдалося видалити клієнта");
+    },
+  });
+
+  const handleDelete = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    if (window.confirm("Ви впевнені, що хочете видалити цього клієнта?")) {
+      deleteMutation.mutate(id);
+    }
+  };
 
   if (isLoading && (!leads || leads.length === 0)) {
     return <div className="p-20 text-center">Завантаження...</div>;
@@ -79,14 +97,14 @@ export default function LeadTable({
                 {lead.value ? `${lead.value.toLocaleString()} $` : "—"}
               </td>
               {/* Кнопка видалення */}
-              {/* <td className="px-6 py-5">
+              <td className="px-6 py-5">
                 <button
                   onClick={(e) => handleDelete(e, lead.id)}
                   className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all opacity-0 group-hover:opacity-100"
                 >
                   <Trash2 size={16} />
                 </button>
-              </td> */}
+              </td>
             </tr>
           ))}
         </tbody>
