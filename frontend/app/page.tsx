@@ -39,6 +39,8 @@ export default function LeadsPage() {
     placeholderData: (previousData) => previousData,
   });
 
+  console.log("leads", leads);
+
   useEffect(() => {
     setPage(1);
   }, [debouncedSearch, statusFilter, sortConfig]);
