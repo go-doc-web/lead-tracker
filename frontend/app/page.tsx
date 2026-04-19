@@ -120,7 +120,7 @@ export default function LeadsPage() {
           </div>
         </div>
 
-        <StatsCards />
+        <StatsCards stats={leads?.stats} isLoading={isLoading} />
 
         <div className="mt-8">
           <LeadTable

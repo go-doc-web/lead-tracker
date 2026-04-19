@@ -87,7 +87,7 @@ export class LeadsService {
     });
 
     const inProgressCount = await this.prisma.lead.count({
-      where: { ...where, status: { in: ['IN_PROGRESS', 'CONTACTED'] } },
+      where: { ...where, status: { in: ['IN_PROGRESS'] } },
     });
 
     const wonCount = await this.prisma.lead.count({
