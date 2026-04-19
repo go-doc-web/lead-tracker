@@ -79,8 +79,29 @@ export class LeadsService {
 
     const total = await this.prisma.lead.count({ where });
 
+    // Stats
+
+    const statsAggregation = await this.prisma.lead.aggregate({
+      where,
+      _sum: { value: true },
+    });
+
+    const inProgressCount = await this.prisma.lead.count({
+      where: { ...where, status: { in: ['IN_PROGRESS'] } },
+    });
+
+    const wonCount = await this.prisma.lead.count({
+      where: { ...where, status: 'WON' },
+    });
+
     return {
       data: leads,
+      stats: {
+        totalValue: statsAggregation._sum.value || 0,
+        totalCount: total,
+        wonCount,
+        inProgressCount,
+      },
       meta: {
         total,
         page,

@@ -39,6 +39,8 @@ export default function LeadsPage() {
     placeholderData: (previousData) => previousData,
   });
 
+  console.log("leads", leads);
+
   useEffect(() => {
     setPage(1);
   }, [debouncedSearch, statusFilter, sortConfig]);
@@ -118,7 +120,7 @@ export default function LeadsPage() {
           </div>
         </div>
 
-        <StatsCards />
+        <StatsCards stats={leads?.stats} isLoading={isLoading} />
 
         <div className="mt-8">
           <LeadTable

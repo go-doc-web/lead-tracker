@@ -29,6 +29,12 @@ export interface Lead {
 
 export interface ApiResponse<T> {
   data: T[];
+  stats: {
+    inProgressCount: number;
+    totalCount: number;
+    totalValue: number;
+    wonCount: number;
+  };
   meta: {
     total: number;
     page: number;
