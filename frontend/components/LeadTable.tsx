@@ -13,12 +13,14 @@ interface LeadTableProps {
     lastPage: number;
   };
   isLoading: boolean;
+  onPageChange: (page: number) => void;
 }
 
 export default function LeadTable({
   data: leads = [],
   meta,
   isLoading,
+  onPageChange,
 }: LeadTableProps) {
   const router = useRouter();
 
@@ -35,7 +37,7 @@ export default function LeadTable({
     );
   }
 
-  const totalPages = meta?.total || 0;
+  const totalPages = meta?.lastPage || 0;
   const currentPage = meta?.page || 1;
   return (
     <div className="bg-white rounded-[32px] border border-slate-200 overflow-hidden shadow-sm">
@@ -77,14 +79,14 @@ export default function LeadTable({
                 {lead.value ? `${lead.value.toLocaleString()} $` : "—"}
               </td>
               {/* Кнопка видалення */}
-              <td className="px-6 py-5">
+              {/* <td className="px-6 py-5">
                 <button
                   onClick={(e) => handleDelete(e, lead.id)}
                   className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all opacity-0 group-hover:opacity-100"
                 >
                   <Trash2 size={16} />
                 </button>
-              </td>
+              </td> */}
             </tr>
           ))}
         </tbody>
@@ -99,18 +101,14 @@ export default function LeadTable({
           <div className="flex gap-2">
             <button
               disabled={currentPage === 1}
-              onClick={() =>
-                fetchLeads(currentPage - 1, search, status, sort, order)
-              }
+              onClick={() => onPageChange(currentPage - 1)}
               className="px-4 py-2 border border-slate-200 rounded-xl text-[10px] font-black uppercase disabled:opacity-30"
             >
               Назад
             </button>
             <button
               disabled={currentPage === totalPages}
-              onClick={() =>
-                fetchLeads(currentPage + 1, search, status, sort, order)
-              }
+              onClick={() => onPageChange(currentPage + 1)}
               className="px-4 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase disabled:opacity-30"
             >
               Далі

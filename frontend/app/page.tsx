@@ -20,16 +20,17 @@ export default function LeadsPage() {
   const [statusFilter, setStatusFilter] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [debouncedSearch, setDebouncedSearch] = useState(searchQuery);
+  const [page, setPage] = useState<number>(1);
   const [sortConfig, setSortConfig] = useState({
     sort: "createdAt",
     order: "desc",
   });
 
   const { data: leads, isLoading } = useQuery({
-    queryKey: ["leads", 1, debouncedSearch, statusFilter, sortConfig],
+    queryKey: ["leads", page, debouncedSearch, statusFilter, sortConfig],
     queryFn: () =>
       leadsApi.getAll(
-        1,
+        page,
         debouncedSearch,
         statusFilter,
         sortConfig.sort,
@@ -37,6 +38,10 @@ export default function LeadsPage() {
       ),
     placeholderData: (previousData) => previousData,
   });
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, statusFilter, sortConfig]);
 
   useEffect(() => {
     const timoutId = setTimeout(() => {
@@ -116,7 +121,11 @@ export default function LeadsPage() {
         <StatsCards />
 
         <div className="mt-8">
-          <LeadTable {...leads} isLoading={isLoading} />
+          <LeadTable
+            {...leads}
+            isLoading={isLoading}
+            onPageChange={(newPage) => setPage(newPage)}
+          />
         </div>
       </div>
 
