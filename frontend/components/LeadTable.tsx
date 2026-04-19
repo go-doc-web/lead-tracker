@@ -1,9 +1,11 @@
 "use client";
+import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { Lead } from "@/types/lead";
 import { leadsApi } from "@/api/leads";
 import StatusBadge from "./StatusBadge";
+import ConfirmModal from "./ConfirmModal";
 import { Trash2 } from "lucide-react"; // Імпортуємо іконку
 import { toast } from "sonner";
 
@@ -26,6 +28,7 @@ export default function LeadTable({
 }: LeadTableProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => leadsApi.delete(id),
@@ -40,9 +43,7 @@ export default function LeadTable({
 
   const handleDelete = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    if (window.confirm("Ви впевнені, що хочете видалити цього клієнта?")) {
-      deleteMutation.mutate(id);
-    }
+    setConfirmDeleteId(id);
   };
 
   if (isLoading && (!leads || leads.length === 0)) {
@@ -58,7 +59,7 @@ export default function LeadTable({
   const totalPages = meta?.lastPage || 0;
   const currentPage = meta?.page || 1;
   return (
-    <div className="bg-white rounded-[32px] border border-slate-200 overflow-hidden shadow-sm">
+    <div className="bg-white rounded-4xl border border-slate-200 overflow-hidden shadow-sm">
       <table className="w-full text-left">
         <thead className="bg-slate-50 border-b border-slate-100">
           <tr>
@@ -109,6 +110,20 @@ export default function LeadTable({
           ))}
         </tbody>
       </table>
+      <ConfirmModal
+        isOpen={!!confirmDeleteId}
+        isLoading={deleteMutation.isPending}
+        title="Видалити клієнта?"
+        message="Ця дія є незворотною. Всі дані про цього ліда та коментарі будуть видалені."
+        onClose={() => setConfirmDeleteId(null)}
+        onConfirm={() => {
+          if (confirmDeleteId) {
+            deleteMutation.mutate(confirmDeleteId, {
+              onSuccess: () => setConfirmDeleteId(null),
+            });
+          }
+        }}
+      />
 
       {/* Пагінація */}
       {totalPages > 1 && (
