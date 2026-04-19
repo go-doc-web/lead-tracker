@@ -1,47 +1,65 @@
 "use client";
-
-import { useLeadStore } from "@/store/useLeadStore";
+import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
+import { Lead } from "@/types/lead";
+import { leadsApi } from "@/api/leads";
 import StatusBadge from "./StatusBadge";
-import { useEffect } from "react";
+import ConfirmModal from "./ConfirmModal";
 import { Trash2 } from "lucide-react"; // Імпортуємо іконку
+import { toast } from "sonner";
+
+interface LeadTableProps {
+  data?: Lead[];
+  meta?: {
+    total: number;
+    page: number;
+    lastPage: number;
+  };
+  isLoading: boolean;
+  onPageChange: (page: number) => void;
+}
 
 export default function LeadTable({
-  search,
-  status,
-}: {
-  search: string;
-  status: string;
-}) {
+  data: leads = [],
+  meta,
+  isLoading,
+  onPageChange,
+}: LeadTableProps) {
   const router = useRouter();
-  // Додаємо removeLead зі стору
-  const {
-    leads,
-    loading,
-    totalPages,
-    currentPage,
-    fetchLeads,
-    sort,
-    order,
-    removeLead,
-  } = useLeadStore();
+  const queryClient = useQueryClient();
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchLeads(currentPage, search, status, sort, order);
-  }, [search, status, sort, order, currentPage, fetchLeads]);
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => leadsApi.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
+      toast.success("Клієнта видалено");
+    },
+    onError: () => {
+      toast.error("Не вдалося видалити клієнта");
+    },
+  });
 
-  const handleDelete = async (e: React.MouseEvent, id: string) => {
-    e.stopPropagation(); // Щоб не перейшло на сторінку ліда при натисканні на видалення
-    if (confirm("Ви впевнені, що хочете видалити цього клієнта?")) {
-      await removeLead(id);
-    }
+  const handleDelete = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    setConfirmDeleteId(id);
   };
 
-  if (loading && leads.length === 0)
+  if (isLoading && (!leads || leads.length === 0)) {
     return <div className="p-20 text-center">Завантаження...</div>;
+  }
 
+  if ((!isLoading && !leads) || leads.length === 0) {
+    return (
+      <div className="p-20 text-center text-slate-400">Нічого не знайдено</div>
+    );
+  }
+
+  const totalPages = meta?.lastPage || 0;
+  const currentPage = meta?.page || 1;
   return (
-    <div className="bg-white rounded-[32px] border border-slate-200 overflow-hidden shadow-sm">
+    <div className="bg-white rounded-4xl border border-slate-200 overflow-hidden shadow-sm">
       <table className="w-full text-left">
         <thead className="bg-slate-50 border-b border-slate-100">
           <tr>
@@ -59,7 +77,7 @@ export default function LeadTable({
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100">
-          {leads.map((lead) => (
+          {leads.map((lead: Lead) => (
             <tr
               key={lead.id}
               onClick={() => router.push(`/leads/${lead.id}`)}
@@ -92,6 +110,20 @@ export default function LeadTable({
           ))}
         </tbody>
       </table>
+      <ConfirmModal
+        isOpen={!!confirmDeleteId}
+        isLoading={deleteMutation.isPending}
+        title="Видалити клієнта?"
+        message="Ця дія є незворотною. Всі дані про цього ліда та коментарі будуть видалені."
+        onClose={() => setConfirmDeleteId(null)}
+        onConfirm={() => {
+          if (confirmDeleteId) {
+            deleteMutation.mutate(confirmDeleteId, {
+              onSuccess: () => setConfirmDeleteId(null),
+            });
+          }
+        }}
+      />
 
       {/* Пагінація */}
       {totalPages > 1 && (
@@ -102,18 +134,14 @@ export default function LeadTable({
           <div className="flex gap-2">
             <button
               disabled={currentPage === 1}
-              onClick={() =>
-                fetchLeads(currentPage - 1, search, status, sort, order)
-              }
+              onClick={() => onPageChange(currentPage - 1)}
               className="px-4 py-2 border border-slate-200 rounded-xl text-[10px] font-black uppercase disabled:opacity-30"
             >
               Назад
             </button>
             <button
               disabled={currentPage === totalPages}
-              onClick={() =>
-                fetchLeads(currentPage + 1, search, status, sort, order)
-              }
+              onClick={() => onPageChange(currentPage + 1)}
               className="px-4 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase disabled:opacity-30"
             >
               Далі

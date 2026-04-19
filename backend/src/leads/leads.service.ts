@@ -52,9 +52,9 @@ export class LeadsService {
   }
   async findAll(query: GetLeadsDto) {
     const { page, limit, search, status, sort, order } = query;
+
     const skip = (page - 1) * limit;
 
-    // Формуємо фільтри
     const where: any = {
       ...(status && { status }),
       ...(search && {

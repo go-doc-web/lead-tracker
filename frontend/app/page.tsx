@@ -2,10 +2,11 @@
 
 import dynamic from "next/dynamic";
 import { useState, useEffect } from "react";
-import { Plus, Search, SlidersHorizontal, ArrowUpDown } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Plus, Search, ArrowUpDown } from "lucide-react";
 import CreateLeadModal from "@/components/CreateLeadModal";
 import StatsCards from "@/components/StatsCards";
-import { useLeadStore } from "@/store/useLeadStore";
+import { leadsApi } from "@/api/leads";
 
 const LeadTable = dynamic(() => import("@/components/LeadTable"), {
   ssr: false,
@@ -18,19 +19,40 @@ export default function LeadsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [debouncedSearch, setDebouncedSearch] = useState(searchQuery);
+  const [page, setPage] = useState<number>(1);
+  const [sortConfig, setSortConfig] = useState({
+    sort: "createdAt",
+    order: "desc",
+  });
 
-  const { fetchLeads, sort, order } = useLeadStore();
+  const { data: leads, isLoading } = useQuery({
+    queryKey: ["leads", page, debouncedSearch, statusFilter, sortConfig],
+    queryFn: () =>
+      leadsApi.getAll(
+        page,
+        debouncedSearch,
+        statusFilter,
+        sortConfig.sort,
+        sortConfig.order,
+      ),
+    placeholderData: (previousData) => previousData,
+  });
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchLeads(1, searchQuery, statusFilter, sort, order);
+    setPage(1);
+  }, [debouncedSearch, statusFilter, sortConfig]);
+
+  useEffect(() => {
+    const timoutId = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
     }, 400);
-    return () => clearTimeout(timer);
-  }, [searchQuery, statusFilter, sort, order, fetchLeads]);
+    return () => clearTimeout(timoutId);
+  }, [searchQuery]);
 
   const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const [newSort, newOrder] = e.target.value.split(":");
-    fetchLeads(1, searchQuery, statusFilter, newSort, newOrder);
+    const [sort, order] = e.target.value.split(":");
+    setSortConfig({ sort, order });
   };
 
   return (
@@ -80,7 +102,7 @@ export default function LeadsPage() {
             <div className="relative">
               <select
                 onChange={handleSortChange}
-                value={`${sort}:${order}`}
+                value={`${sortConfig.sort}:${sortConfig.order}`}
                 className="bg-white border border-slate-200 rounded-2xl px-5 py-3.5 pr-10 text-[11px] font-black uppercase tracking-widest outline-none cursor-pointer appearance-none"
               >
                 <option value="createdAt:desc">Нові</option>
@@ -99,7 +121,11 @@ export default function LeadsPage() {
         <StatsCards />
 
         <div className="mt-8">
-          <LeadTable search={searchQuery} status={statusFilter} />
+          <LeadTable
+            {...leads}
+            isLoading={isLoading}
+            onPageChange={(newPage) => setPage(newPage)}
+          />
         </div>
       </div>
 
