@@ -6,16 +6,13 @@ import StatusBadge from "./StatusBadge";
 import { Trash2 } from "lucide-react"; // Імпортуємо іконку
 
 interface LeadTableProps {
-  leads?: Lead[];
+  data?: Lead[];
   meta?: {
-    totalItems: number;
-    itemCount: number;
-    itemsPerPage: number;
-    totalPages: number;
-    currentPage: number;
+    total: number;
+    page: number;
+    lastPage: number;
   };
   isLoading: boolean;
-  // ... другие пропсы, если нужны
 }
 
 export default function LeadTable({
@@ -38,8 +35,8 @@ export default function LeadTable({
     );
   }
 
-  const totalPages = meta?.totalPages || 0;
-  const currentPage = meta?.currentPage || 1;
+  const totalPages = meta?.total || 0;
+  const currentPage = meta?.page || 1;
   return (
     <div className="bg-white rounded-[32px] border border-slate-200 overflow-hidden shadow-sm">
       <table className="w-full text-left">
